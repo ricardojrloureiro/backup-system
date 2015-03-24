@@ -1,12 +1,11 @@
+package Server;
+
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 
-/**
- * Created by Tiago on 23/03/2015.
- */
 public class ReceiveThread extends Thread {
 
     private InetAddress mc_address;
