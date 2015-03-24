@@ -23,21 +23,21 @@ public class ReceiveThread extends Thread {
         this.mc_address = InetAddress.getByName(mc);
         this.mc_port = mc_port;
 
-        /*this.mcb_address = InetAddress.getByName(mcb);
+        this.mcb_address = InetAddress.getByName(mcb);
         this.mcb_port = mcb_port;
 
         this.mcr_address = InetAddress.getByName(mcr);
-        this.mcr_port = mcr_port;*/
+        this.mcr_port = mcr_port;
 
         //sockets initialization
         this.mc_socket = new MulticastSocket(this.mc_port);
         this.mc_socket.setTimeToLive(1);
 
-      /*  this.mcb_socket = new MulticastSocket(this.mcb_port);
+        this.mcb_socket = new MulticastSocket(this.mcb_port);
         this.mcb_socket.setTimeToLive(1);
 
         this.mcr_socket = new MulticastSocket(this.mcr_port);
-        this.mcr_socket.setTimeToLive(1);*/
+        this.mcr_socket.setTimeToLive(1);
 
     }
 
@@ -45,8 +45,8 @@ public class ReceiveThread extends Thread {
 
         try {
             mc_socket.joinGroup(mc_address);
-           /* mcb_socket.joinGroup(mcb_address);
-            mcr_socket.joinGroup(mcr_address); */
+            mcb_socket.joinGroup(mcb_address);
+            mcr_socket.joinGroup(mcr_address);
 
             byte[] buf = new byte[256];
             DatagramPacket packet = new DatagramPacket(buf, buf.length);
@@ -60,6 +60,5 @@ public class ReceiveThread extends Thread {
         }
 
     }
-
 
 }

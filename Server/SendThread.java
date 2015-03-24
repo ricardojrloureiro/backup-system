@@ -1,50 +1,87 @@
 package Server;
 
+import Auxiliar.Chunk;
+import Auxiliar.PartitionedFile;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.util.ArrayList;
 
 public class SendThread extends Thread {
 
+    //addresses
     private InetAddress mc_address;
+    private InetAddress mdr_address;
+    private InetAddress mdb_address;
+
+    //ports
     private int mc_port;
-    private MulticastSocket socket;
+    private int mdr_port;
+    private int mdb_port;
 
+    //sockets
+    private MulticastSocket mc_socket;
+    private MulticastSocket mdr_socket;
+    private MulticastSocket mdb_socket;
 
-    public SendThread(String mc, int mc_port) throws IOException {
-        System.out.println("Send Thread info " + "mc:" + mc + ", port:" + mc_port);
+    public SendThread(String mc, int mc_port, String mdr, int mdr_port, String mdb, int mdb_port)
+            throws IOException {
+
+        //Initiation of mc channel
         this.mc_address = InetAddress.getByName(mc);
         this.mc_port = mc_port;
-        this.socket = new MulticastSocket(mc_port);
-        this.socket.setTimeToLive(1);
+        this.mc_socket = new MulticastSocket(mc_port);
+        this.mc_socket.setTimeToLive(1);
+
+        //Initiation of mdb channel
+        this.mdr_address = InetAddress.getByName(mdr);
+        this.mdr_port = mdr_port;
+        this.mdr_socket = new MulticastSocket(mdr_port);
+        this.mdr_socket.setTimeToLive(1);
+
+        //Initiation of mdr channel
+        this.mdb_address = InetAddress.getByName(mdb);
+        this.mdb_port = mdb_port;
+        this.mc_socket = new MulticastSocket(mc_port);
+        this.mc_socket.setTimeToLive(1);
+
     }
 
     public void run() {
-
         //read message from console
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
-        String message = null;
-        byte[] buf = new byte[256];
-
         try {
-            System.out.print("Message: ");
-            message = br.readLine();
-            buf = message.getBytes();
+            String message = br.readLine();
 
-            //send message to group
-            DatagramPacket packet = new DatagramPacket(buf, buf.length, mc_address, mc_port);
-            socket.send(packet);
-            System.out.println("Sent: " + message);
+            switch(message){
+                case "PUTCHUNK": {
+                    System.out.println("Chunk command prompted");
+                    sendChunks();
+                }
+                break;
+
+                default: {
+                    System.out.println("Default command prompted");
+                } break;
+            }
 
         } catch (IOException e) {
             e.printStackTrace();
-            System.exit(1);
         }
-
     }
+
+    public void sendChunks() {
+        PartitionedFile fullFile = new PartitionedFile("/Users/ricardo/Desktop/random.txt");
+        ArrayList<Chunk> chunks = fullFile.getChunks();
+
+        for (int i = 0; i < chunks.size(); i++) {
+            System.out.println(i + chunks.get(i).getChunkSize());
+        }
+    }
+
 
 }
