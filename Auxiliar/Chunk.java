@@ -13,4 +13,8 @@ public class Chunk {
     public int getChunkSize() {
         return body.length;
     }
+
+    public byte[] getBody() {
+        return body;
+    }
 }

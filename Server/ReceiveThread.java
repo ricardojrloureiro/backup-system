@@ -15,19 +15,24 @@ public class ReceiveThread extends Thread {
     private int mcb_port;
     private int mcr_port;
 
+    private boolean state;
+
     private MulticastSocket mc_socket, mcb_socket, mcr_socket;
 
     public ReceiveThread(String mc, int mc_port, String mcb, int mcb_port, String mcr, int mcr_port) throws IOException {
-        System.out.println("Receive thread info " + "mc:" + mc + ", port:" + mc_port);
+        state=true;
 
         this.mc_address = InetAddress.getByName(mc);
         this.mc_port = mc_port;
 
+
         this.mcb_address = InetAddress.getByName(mcb);
         this.mcb_port = mcb_port;
 
+
         this.mcr_address = InetAddress.getByName(mcr);
         this.mcr_port = mcr_port;
+
 
         //sockets initialization
         this.mc_socket = new MulticastSocket(this.mc_port);
@@ -42,21 +47,38 @@ public class ReceiveThread extends Thread {
     }
 
     public void run() {
-
         try {
             mc_socket.joinGroup(mc_address);
             mcb_socket.joinGroup(mcb_address);
             mcr_socket.joinGroup(mcr_address);
-
-            byte[] buf = new byte[256];
-            DatagramPacket packet = new DatagramPacket(buf, buf.length);
-            mc_socket.receive(packet);
-
-            String received = new String(packet.getData(), 0, packet.getLength());
-            System.out.println("Received: " + received);
-
+            
         } catch (IOException e) {
             e.printStackTrace();
+        }
+
+        byte[] buf = new byte[65000];
+
+        while(state) {
+            DatagramPacket packet = new DatagramPacket(buf, buf.length);
+            try {
+                mc_socket.receive(packet);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            try {
+                sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            System.out.println("Received: " + packet.toString());
+
+            try {
+                sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
 
     }

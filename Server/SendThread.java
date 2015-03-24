@@ -6,6 +6,7 @@ import Auxiliar.PartitionedFile;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.util.ArrayList;
@@ -71,17 +72,25 @@ public class SendThread extends Thread {
 
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 
-    public void sendChunks() {
-        PartitionedFile fullFile = new PartitionedFile("/Users/ricardo/Desktop/random.txt");
+    public void sendChunks() throws IOException, InterruptedException {
+        PartitionedFile fullFile = new PartitionedFile("/Users/ricardo/Desktop/melo.png");
         ArrayList<Chunk> chunks = fullFile.getChunks();
 
         for (int i = 0; i < chunks.size(); i++) {
-            System.out.println(i + chunks.get(i).getChunkSize());
+            // ADD HEADER - tem de se criar a mensagem e passar para bytes e adicionar ao buf
+            byte[] buf = chunks.get(i).getBody();
+            DatagramPacket packet = new DatagramPacket(buf, buf.length, mc_address, mc_port);
+            mc_socket.send(packet);
+            sleep(2000); // sleeps after sending one chunk
         }
     }
 
+    public void header() {
 
+    }
 }
