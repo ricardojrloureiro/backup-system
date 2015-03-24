@@ -10,7 +10,7 @@ public class Peer {
     public static void main(String[] args) throws IOException {
 
         if(args.length != 6) {
-            System.out.println("Usage: java Client.Peer <Multicast Control Channel>" +
+            System.out.println("Usage: java Peer <Multicast Control Channel>" +
                     " <port> <Muticast Backup Channel> <port> <Muticast Restore Channel> <port>");
         }
 
