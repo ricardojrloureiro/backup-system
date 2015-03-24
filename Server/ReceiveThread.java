@@ -72,7 +72,9 @@ public class ReceiveThread extends Thread {
                 e.printStackTrace();
             }
 
-            System.out.println("Received: " + packet.toString());
+            String received = new String(packet.getData(), 0, packet.getLength());
+            System.out.println(received);
+            //System.out.println("Received: " + packet.toString());
 
             try {
                 sleep(1000);

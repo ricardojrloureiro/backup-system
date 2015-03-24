@@ -78,19 +78,48 @@ public class SendThread extends Thread {
     }
 
     public void sendChunks() throws IOException, InterruptedException {
-        PartitionedFile fullFile = new PartitionedFile("/Users/ricardo/Desktop/melo.png");
+        PartitionedFile fullFile = new PartitionedFile("C:\\Users\\Tiago\\Desktop\\missionarios.pl");
         ArrayList<Chunk> chunks = fullFile.getChunks();
 
         for (int i = 0; i < chunks.size(); i++) {
             // ADD HEADER - tem de se criar a mensagem e passar para bytes e adicionar ao buf
-            byte[] buf = chunks.get(i).getBody();
+            //byte[] buf = chunks.get(i).getBody();
+
+            byte[] buf = createBackupMessage(chunks.get(i));
+
             DatagramPacket packet = new DatagramPacket(buf, buf.length, mc_address, mc_port);
             mc_socket.send(packet);
             sleep(2000); // sleeps after sending one chunk
         }
     }
 
-    public void header() {
+    public byte[] createBackupMessage(Chunk chunk) {
 
+        //TODO: meter isto a ser pela consola em vez so do PUTCHUNK
+        String command = "PUTCHUNK 1.0 5 0 5";
+        byte[] commandBytes = command.getBytes();
+
+        //build termination token
+        byte[] crfl = new byte[4];
+        crfl[0] = 0xD;
+        crfl[1] = 0xA;
+        crfl[2] = 0xD;
+        crfl[3] = 0xA;
+
+        //header
+        byte[] header = new byte[commandBytes.length + crfl.length];
+        System.arraycopy(commandBytes, 0, header, 0, commandBytes.length);
+        System.arraycopy(crfl, 0, header, commandBytes.length, crfl.length);
+
+        //body
+        byte[] body = chunk.getBody();
+
+        //final message
+        byte[] message = new byte[header.length + body.length];
+        System.arraycopy(header, 0, message, 0, header.length);
+        System.arraycopy(body, 0, message, header.length, body.length);
+
+
+        return message;
     }
 }
