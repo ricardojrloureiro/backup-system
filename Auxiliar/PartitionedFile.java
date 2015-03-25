@@ -12,8 +12,7 @@ public class PartitionedFile {
         int sizeOfFiles = 64000;
         byte[] buffer = new byte[sizeOfFiles];
 
-        try (BufferedInputStream bis = new BufferedInputStream(
-                new FileInputStream(f))) {
+        try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(f))) {
             int tmp = 0;
             while ((tmp = bis.read(buffer)) > 0) {
                 try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {

@@ -10,6 +10,7 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class SendThread extends Thread {
 
@@ -58,15 +59,24 @@ public class SendThread extends Thread {
         try {
             String message = br.readLine();
 
-            switch(message){
+            String[] message_args = message.split(" ");
+
+            switch(message_args[0]){
                 case "PUTCHUNK": {
                     System.out.println("Chunk command prompted");
-                    sendChunks();
+
+                    if(message_args.length != 5) {
+                        System.out.println("Usage: PUTCHUNK <Version> <FileId> <ChunkNo> <ReplicationDeg>");
+                    }
+                    else {
+                        sendChunks(message_args);
+                    }
+
                 }
                 break;
 
                 default: {
-                    System.out.println("Default command prompted");
+                    System.out.println("Invalid command, please try again");
                 } break;
             }
 
@@ -77,26 +87,31 @@ public class SendThread extends Thread {
         }
     }
 
-    public void sendChunks() throws IOException, InterruptedException {
-        PartitionedFile fullFile = new PartitionedFile("C:\\Users\\Tiago\\Desktop\\missionarios.pl");
+    public void sendChunks(String[] message_args) throws IOException, InterruptedException {
+
+        String version = message_args[1];
+        String fileId = message_args[2];
+        Integer chunkNo = Integer.parseInt(message_args[3]);
+        Integer replicationDeg = Integer.parseInt(message_args[4]);
+
+        PartitionedFile fullFile = new PartitionedFile("C:\\Users\\Tiago\\Desktop\\artifacts.xml");
         ArrayList<Chunk> chunks = fullFile.getChunks();
 
-        for (int i = 0; i < chunks.size(); i++) {
-            // ADD HEADER - tem de se criar a mensagem e passar para bytes e adicionar ao buf
-            //byte[] buf = chunks.get(i).getBody();
+        byte[] buf = createBackupMessage(chunks.get(chunkNo), message_args);
 
-            byte[] buf = createBackupMessage(chunks.get(i));
-
-            DatagramPacket packet = new DatagramPacket(buf, buf.length, mc_address, mc_port);
-            mc_socket.send(packet);
-            sleep(2000); // sleeps after sending one chunk
-        }
+        DatagramPacket packet = new DatagramPacket(buf, buf.length, mc_address, mc_port);
+        mc_socket.send(packet);
     }
 
-    public byte[] createBackupMessage(Chunk chunk) {
+    public byte[] createBackupMessage(Chunk chunk, String[] message_args) {
 
-        //TODO: meter isto a ser pela consola em vez so do PUTCHUNK
-        String command = "PUTCHUNK 1.0 5 0 5";
+        StringBuilder builder = new StringBuilder();
+        for(String s : message_args) {
+            builder.append(s);
+            builder.append(" ");
+        }
+
+        String command = builder.toString(); //join all the arguments of the command into a string
         byte[] commandBytes = command.getBytes();
 
         //build termination token
