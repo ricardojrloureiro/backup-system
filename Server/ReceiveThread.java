@@ -1,5 +1,7 @@
 package Server;
 
+import Auxiliar.Partials;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -8,31 +10,32 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Random;
 
 
 public class ReceiveThread extends Thread {
 
+    private String currentDir;
     private InetAddress mc_address;
-    private InetAddress mcb_address;
+    private InetAddress mdb_address;
     private InetAddress mcr_address;
     private int mc_port;
-    private int mcb_port;
+    private int mdb_port;
     private int mcr_port;
 
     private boolean state;
 
-    private MulticastSocket mc_socket, mcb_socket, mcr_socket;
+    private MulticastSocket mc_socket, mdb_socket, mcr_socket;
 
-    public ReceiveThread(String mc, int mc_port, String mcb, int mcb_port, String mcr, int mcr_port) throws IOException {
+    public ReceiveThread(String mc, int mc_port, String mdb, int mdb_port, String mcr, int mcr_port, String dir) throws IOException {
         state=true;
 
         this.mc_address = InetAddress.getByName(mc);
         this.mc_port = mc_port;
 
 
-        this.mcb_address = InetAddress.getByName(mcb);
-        this.mcb_port = mcb_port;
+        this.mdb_address = InetAddress.getByName(mdb);
+        this.mdb_port = mdb_port;
 
 
         this.mcr_address = InetAddress.getByName(mcr);
@@ -43,18 +46,20 @@ public class ReceiveThread extends Thread {
         this.mc_socket = new MulticastSocket(this.mc_port);
         this.mc_socket.setTimeToLive(1);
 
-        this.mcb_socket = new MulticastSocket(this.mcb_port);
-        this.mcb_socket.setTimeToLive(1);
+        this.mdb_socket = new MulticastSocket(this.mdb_port);
+        this.mdb_socket.setTimeToLive(1);
 
         this.mcr_socket = new MulticastSocket(this.mcr_port);
         this.mcr_socket.setTimeToLive(1);
+
+        this.currentDir = dir;
 
     }
 
     public void run() {
         try {
             mc_socket.joinGroup(mc_address);
-            mcb_socket.joinGroup(mcb_address);
+            mdb_socket.joinGroup(mdb_address);
             mcr_socket.joinGroup(mcr_address);
             
         } catch (IOException e) {
@@ -66,14 +71,10 @@ public class ReceiveThread extends Thread {
         while(state) {
             DatagramPacket packet = new DatagramPacket(buf, buf.length);
             try {
-                mc_socket.receive(packet);
+                //mc_socket.receive(packet);
+                mdb_socket.receive(packet);
+                //mcr_socket.receive(packet);
             } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            try {
-                sleep(1000);
-            } catch (InterruptedException e) {
                 e.printStackTrace();
             }
 
@@ -89,26 +90,67 @@ public class ReceiveThread extends Thread {
             //print results
             System.out.println("HEADER: ");
             System.out.println(header);
-            //System.out.println("BODY: ");
-            //System.out.println(body);
 
-            saveChunk(body);
+            //split the header to fetch the fileId
+            String[] header_args = header.split(" ");
 
-            try {
-                sleep(1000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+            if(header_args[0].equals("PUTCHUNK")) {
+                String fileName = header_args[2];
+
+                //save file in storage if there is enough available space
+                if(Partials.updateConfFile(currentDir,header_args,body.getBytes())){
+                    saveChunk(body, fileName);
+
+                    Random r = new Random();
+                    int delay = r.nextInt(401);
+                    try {
+                        sleep(delay);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+
+                    System.out.println("Sending STORE");
+                    sendStoredMessage(header_args);
+
+                }
+
+
             }
+
         }
 
     }
 
-    private void saveChunk(String body) {
-        new File("teste");
+    private void sendStoredMessage(String[] header_args) {
+        StringBuilder builder = new StringBuilder();
+
+        builder.append("STORED " + header_args[1] + " " + header_args[2] + " " + header_args[3] + " ");
+
+        String command = builder.toString(); //join all the arguments of the command into a string
+        byte[] commandBytes = command.getBytes();
+
+        //build termination token
+        byte[] crlf = Partials.createCRLFToken();
+
+        //message
+        byte[] message = new byte[commandBytes.length + crlf.length];
+        System.arraycopy(commandBytes, 0, message, 0, commandBytes.length);
+        System.arraycopy(crlf, 0, message, commandBytes.length, crlf.length);
+
+        DatagramPacket packet = new DatagramPacket(message, message.length, mc_address, mc_port);
+        try {
+            mc_socket.send(packet);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void saveChunk(String body, String fileName) {
+        File toSave = new File(this.currentDir + "/" + fileName);
         PrintWriter out = null;
 
         try {
-            out = new PrintWriter("teste");
+            out = new PrintWriter(toSave);
             out.println(body);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
