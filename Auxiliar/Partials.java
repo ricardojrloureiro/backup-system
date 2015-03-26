@@ -123,6 +123,7 @@ public class Partials {
                 if (separatedLine[1].equals(filename)) {
                     separatedLine[4] = String.valueOf(Integer.parseInt(separatedLine[4]) + 1);
                     String newString = Arrays.toString(separatedLine);
+                    newString = newString.substring(1,newString.length()-1);
                     fullData += newString + '\n';
                 } else {
                     fullData += line + '\n';
