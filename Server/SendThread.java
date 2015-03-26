@@ -154,7 +154,7 @@ public class SendThread extends Thread {
         String fileId = message_args[2];
         Integer chunkNo = Integer.parseInt(message_args[3]);
 
-        PartitionedFile fullFile = new PartitionedFile("C:\\Users\\Tiago\\Desktop\\artifacts.xml");
+        PartitionedFile fullFile = new PartitionedFile("/Users/ricardo/Desktop/faculdade/3ano/1semestre/ltw/exames/ltw-2012-01-23-en.pdf");
         ArrayList<Chunk> chunks = fullFile.getChunks();
 
         byte[] buf = new byte[0];
@@ -191,7 +191,8 @@ public class SendThread extends Thread {
     }
 
 
-    public byte[] createBackupMessage(Chunk chunk, String[] message_args) throws UnsupportedEncodingException, NoSuchAlgorithmException {
+    public byte[] createBackupMessage(Chunk chunk, String[] message_args)
+            throws UnsupportedEncodingException, NoSuchAlgorithmException {
 
         StringBuilder builder = new StringBuilder();
 

@@ -1,6 +1,7 @@
 package Auxiliar;
 
 import java.io.*;
+import java.util.Arrays;
 
 /**
  * Created by Tiago on 26/03/2015.
@@ -49,7 +50,7 @@ public class Partials {
 
         try {
             out = new PrintWriter(config);
-            out.println("Version,ChunkNo,FileId,RepDegMin,RepDegAct,currentSpace");
+            out.println("Version,FileId,ChunkNo,RepDegMin,RepDegAct,currentSpace");
             out.println(",,,,," + space);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -70,7 +71,7 @@ public class Partials {
 
             if(difference>0){
                 //updates file
-                writer.write(header_args[1] + "," + header_args[2]+","+header_args[3]+","+header_args[4]+","+"2"+","+String.valueOf(difference));
+                writer.write(header_args[1] + "," + header_args[2]+","+header_args[3]+","+header_args[4]+","+"0"+","+String.valueOf(difference));
                 writer.newLine();
                 writer.close();
                 return true;
@@ -96,9 +97,9 @@ public class Partials {
                 last = line;
             }
 
-            String[] seperatedLine = last.split(",");
+            String[] separatedLine = last.split(",");
 
-            return Integer.parseInt(seperatedLine[seperatedLine.length-1]);
+            return Integer.parseInt(separatedLine[separatedLine.length-1]);
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -107,5 +108,32 @@ public class Partials {
         }
 
         return 0;
+    }
+
+    public static void changeRepDegree(String currentDir, String filename)
+            throws IOException {
+
+        BufferedReader input = new BufferedReader(new FileReader(currentDir + "/conf.csv"));
+        String line, fullData="";
+        String lineToUpdate = null;
+
+        while((line=input.readLine()) != null) {
+            String[] separatedLine = line.split(",");
+            if(separatedLine.length>1) {
+                if (separatedLine[1].equals(filename)) {
+                    separatedLine[4] = String.valueOf(Integer.parseInt(separatedLine[4]) + 1);
+                    String newString = Arrays.toString(separatedLine);
+                    fullData += newString + '\n';
+                } else {
+                    fullData += line + '\n';
+                }
+            }
+        }
+        input.close();
+
+        FileOutputStream fileOut = new FileOutputStream(currentDir + "/conf.csv");
+        fileOut.write(fullData.getBytes());
+        fileOut.close();
+
     }
 }

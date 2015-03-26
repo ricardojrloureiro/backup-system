@@ -27,7 +27,8 @@ public class ReceiveThread extends Thread {
 
     private MulticastSocket mc_socket, mdb_socket, mcr_socket;
 
-    public ReceiveThread(String mc, int mc_port, String mdb, int mdb_port, String mcr, int mcr_port, String dir) throws IOException {
+    public ReceiveThread(String mc, int mc_port, String mdb, int mdb_port, String mcr, int mcr_port, String dir)
+            throws IOException {
         state=true;
 
         this.mc_address = InetAddress.getByName(mc);
@@ -71,9 +72,8 @@ public class ReceiveThread extends Thread {
         while(state) {
             DatagramPacket packet = new DatagramPacket(buf, buf.length);
             try {
-                //mc_socket.receive(packet);
                 mdb_socket.receive(packet);
-                //mcr_socket.receive(packet);
+                mc_socket.receive(packet);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -94,11 +94,11 @@ public class ReceiveThread extends Thread {
             //split the header to fetch the fileId
             String[] header_args = header.split(" ");
 
-            if(header_args[0].equals("PUTCHUNK")) {
+            if (header_args[0].equals("PUTCHUNK")) {
                 String fileName = header_args[2];
 
                 //save file in storage if there is enough available space
-                if(Partials.updateConfFile(currentDir,header_args,body.getBytes())){
+                if(Partials.updateConfFile(currentDir, header_args, body.getBytes())) {
                     saveChunk(body, fileName);
 
                     Random r = new Random();
@@ -108,18 +108,23 @@ public class ReceiveThread extends Thread {
                     } catch (InterruptedException e) {
                         e.printStackTrace();
                     }
-
                     System.out.println("Sending STORE");
                     sendStoredMessage(header_args);
-
                 }
 
-
+            } else if (header_args[0].equals("STORED")) {
+                try {
+                    System.out.println("Incrementing value stored");
+                    Partials.changeRepDegree(currentDir, header_args[2]);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
 
         }
 
     }
+
 
     private void sendStoredMessage(String[] header_args) {
         StringBuilder builder = new StringBuilder();
