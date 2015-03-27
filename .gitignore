@@ -1,2 +1,6 @@
 Peers
 *.class
+*.jpg
+*.png
+*.iml
+.idea

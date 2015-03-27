@@ -2,10 +2,7 @@ package Server;
 
 import Auxiliar.Partials;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
@@ -80,12 +77,12 @@ public class ReceiveThread extends Thread {
 
             //parse the message
             String header = null;
-            String body = null;
+            byte[] body = null;
 
-            ArrayList<String> splitMessage = parseMessage(packet.getData(),packet.getLength());
+            ArrayList<Object> splitMessage = parseMessage(packet.getData(), packet.getLength());
 
-            header = splitMessage.get(0);
-            body = splitMessage.get(1);
+            header = (String) splitMessage.get(0);
+            body = (byte[]) splitMessage.get(1);
 
             //print results
             System.out.println("HEADER: ");
@@ -98,8 +95,12 @@ public class ReceiveThread extends Thread {
                 String fileName = header_args[2];
 
                 //save file in storage if there is enough available space
-                if(Partials.updateConfFile(currentDir, header_args, body.getBytes())) {
-                    saveChunk(body, header_args[3] + "-" + fileName);
+                if(Partials.updateConfFile(currentDir, header_args, body)) {
+                    try {
+                        saveChunk(body, header_args[3] + "-" + fileName);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
 
                     Random r = new Random();
                     int delay = r.nextInt(401);
@@ -150,22 +151,20 @@ public class ReceiveThread extends Thread {
         }
     }
 
-    private void saveChunk(String body, String fileName) {
-        File toSave = new File(this.currentDir + "/" + fileName);
-        PrintWriter out = null;
+    private void saveChunk(byte[] body, String fileName) throws IOException {
+
+        OutputStream out = null;
 
         try {
-            out = new PrintWriter(toSave);
-            out.println(body);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            out = new BufferedOutputStream(new FileOutputStream(this.currentDir + "/" + fileName));
+            out.write(body);
+        } finally {
+            if (out != null) out.close();
         }
-        finally {
-            out.close();
-        }
+
     }
 
-    private ArrayList<String> parseMessage(byte[] data, int length) {
+    private ArrayList<Object> parseMessage(byte[] data, int length) {
         ArrayList<byte[]> header_body = splitMessageData(data,length);
 
         byte[] header_data = header_body.get(0);
@@ -173,10 +172,10 @@ public class ReceiveThread extends Thread {
 
         System.out.println("Body size receiver: " + body_data.length);
 
-        ArrayList<String> splitMessage = new ArrayList<>();
+        ArrayList<Object> splitMessage = new ArrayList<>();
 
         splitMessage.add(new String(header_data,0,header_data.length));
-        splitMessage.add(new String(body_data,0,body_data.length));
+        splitMessage.add(body_data);
 
         return splitMessage;
     }
