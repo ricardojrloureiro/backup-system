@@ -10,6 +10,10 @@ public class Chunk {
         this.body = body;
     }
 
+    public int getChunkNumber(){
+        return chunkNumber;
+    }
+
     public int getChunkSize() {
         return body.length;
     }

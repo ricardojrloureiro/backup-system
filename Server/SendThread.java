@@ -68,54 +68,17 @@ public class SendThread extends Thread {
             String[] message_args = message.split(" ");
 
             switch(message_args[0]){
-                case "PUTCHUNK": {
+                case "BACKUP": {
                     System.out.println("Chunk command prompted");
 
-                    if(message_args.length != 5) {
-                        System.out.println("Usage: PUTCHUNK <Version> <FileId> <ChunkNo> <ReplicationDeg>");
+                    if(message_args.length != 4) {
+                        System.out.println("Usage: BACKUP <FILE> <VERSION> <REPLICATION DEGREE>");
                     }
                     else {
-                        int numberOfStores = 0;
-                        byte[] buf = new byte[65000];
-                        int timeout = 500;
-                        int attempts = 5;
-                        boolean finished = false;
 
-                        //encrypt filename before sending the message
-                        String fileId = message_args[2];
-                        message_args[2] = encryptFileId(fileId);
+                        //send file in chunk to other peers
+                        sendFileChunks(message_args);
 
-                        //sends message
-                        System.out.println("Sent PUTCHUNK");
-                        sendChunks(message_args);
-
-                        while(attempts > 0 && !finished) {
-                            DatagramPacket packet = new DatagramPacket(buf, buf.length);
-                            try {
-                                mc_socket.setSoTimeout(timeout);
-                                mc_socket.receive(packet);
-
-                                if(compareMessage(message_args, buf)){
-                                    numberOfStores++;
-                                }
-
-                                if(numberOfStores >= Integer.parseInt(message_args[4])) {
-                                    finished=true;
-                                }
-
-
-                            } catch (SocketTimeoutException e) {
-                                timeout *= 2;
-                                attempts--;
-                                System.out.println("Sent PUTCHUNK");
-                                sendChunks(message_args);
-
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-
-
-                        }
                     }
 
                 }
@@ -132,16 +95,72 @@ public class SendThread extends Thread {
         }
     }
 
-    private boolean compareMessage(String[] message_args, byte[] buf) {
+    private void sendFileChunks(String[] message_args) throws IOException, InterruptedException {
+        String fileId = message_args[1];
+
+        //open file and get chunks
+        PartitionedFile fullFile = new PartitionedFile(fileId);
+        ArrayList<Chunk> chunks = fullFile.getChunks();
+
+        //encrypt filename before sending the message
+        message_args[1] = encryptFileId(fileId);
+
+
+        //send all chunks
+        for(int i = 0; i < chunks.size(); i++) {
+            int numberOfStores = 0;
+            byte[] buf = new byte[65000];
+            int timeout = 500;
+            int attempts = 5;
+            boolean finished = false;
+
+            //sends message
+
+            Chunk currentChunk = chunks.get(i);
+            sendChunk(currentChunk,message_args);
+            System.out.println("Sent PUTCHUNK");
+
+            while(attempts > 0 && !finished) {
+                DatagramPacket packet = new DatagramPacket(buf, buf.length);
+                try {
+                    mc_socket.setSoTimeout(timeout);
+                    mc_socket.receive(packet);
+
+                    if(compareMessage(message_args, buf,String.valueOf(i))){
+                        numberOfStores++;
+                    }
+
+                    if(numberOfStores >= Integer.parseInt(message_args[3])) {
+                        finished=true;
+                    }
+
+                } catch (SocketTimeoutException e) {
+                    timeout *= 2;
+                    attempts--;
+                    sendChunk(currentChunk,message_args);
+                    System.out.println("Sent PUTCHUNK");
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+
+            }
+        }
+
+
+    }
+
+    private boolean compareMessage(String[] message_args, byte[] buf, String chunkNo) {
         String received_header = new String(buf,0,buf.length);
         String[] seperated_header = received_header.split(" ");
 
         System.out.println("Compare Message");
 
         if(seperated_header[0].equals("STORED")) {
-            if(message_args[1].equals(seperated_header[1]) &&
-                    message_args[2].equals(seperated_header[2]) &&
-                    message_args[3].equals(seperated_header[3])) {
+            if(message_args[2].equals(seperated_header[1]) &&
+                    message_args[1].equals(seperated_header[2]) &&
+                    chunkNo.equals(seperated_header[3])) {
                 return true;
             }
         }
@@ -149,17 +168,10 @@ public class SendThread extends Thread {
         return false;
     }
 
-    public void sendChunks(String[] message_args) throws IOException, InterruptedException {
-
-        String fileId = message_args[2];
-        Integer chunkNo = Integer.parseInt(message_args[3]);
-
-        PartitionedFile fullFile = new PartitionedFile("/Users/ricardo/Desktop/faculdade/3ano/1semestre/ltw/exames/ltw-2012-01-23-en.pdf");
-        ArrayList<Chunk> chunks = fullFile.getChunks();
-
+    public void sendChunk(Chunk currentChunk, String[] message_args) throws IOException, InterruptedException {
         byte[] buf = new byte[0];
         try {
-            buf = createBackupMessage(chunks.get(chunkNo), message_args);
+            buf = createBackupMessage(currentChunk, message_args);
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
@@ -190,9 +202,7 @@ public class SendThread extends Thread {
         return output;
     }
 
-
-    public byte[] createBackupMessage(Chunk chunk, String[] message_args)
-            throws UnsupportedEncodingException, NoSuchAlgorithmException {
+    public byte[] createBackupMessage(Chunk chunk, String[] message_args) throws UnsupportedEncodingException, NoSuchAlgorithmException {
 
         StringBuilder builder = new StringBuilder();
 
@@ -201,7 +211,7 @@ public class SendThread extends Thread {
             builder.append(" ");
         }
 
-        String command = builder.toString(); //join all the arguments of the command into a string
+        String command = "PUTCHUNK " + message_args[2] + " " + message_args[1] + " " + chunk.getChunkNumber() + " " + message_args[3] + " ";
         byte[] commandBytes = command.getBytes();
 
         //build termination token
@@ -214,6 +224,7 @@ public class SendThread extends Thread {
 
         //body
         byte[] body = chunk.getBody();
+        System.out.println("Body size sender: " + body.length);
 
         //final message
         byte[] message = new byte[header.length + body.length];

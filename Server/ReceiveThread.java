@@ -73,7 +73,7 @@ public class ReceiveThread extends Thread {
             DatagramPacket packet = new DatagramPacket(buf, buf.length);
             try {
                 mdb_socket.receive(packet);
-                mc_socket.receive(packet);
+                //mc_socket.receive(packet);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -99,7 +99,7 @@ public class ReceiveThread extends Thread {
 
                 //save file in storage if there is enough available space
                 if(Partials.updateConfFile(currentDir, header_args, body.getBytes())) {
-                    saveChunk(body, fileName);
+                    saveChunk(body, header_args[3] + "-" + fileName);
 
                     Random r = new Random();
                     int delay = r.nextInt(401);
@@ -171,6 +171,8 @@ public class ReceiveThread extends Thread {
         byte[] header_data = header_body.get(0);
         byte[] body_data = header_body.get(1);
 
+        System.out.println("Body size receiver: " + body_data.length);
+
         ArrayList<String> splitMessage = new ArrayList<>();
 
         splitMessage.add(new String(header_data,0,header_data.length));
@@ -183,7 +185,7 @@ public class ReceiveThread extends Thread {
         ArrayList<byte[]> header_body = new ArrayList<>();
 
         for(int i = 0; i < data.length; i++) {
-            if(data[i] == 0xD) { //first CR char of the separator
+            if(data[i] == 0xD && data[i+1] == 0xA) { //first CR char of the separator
                 byte[] header = new byte[i];
                 byte[] body = new byte[length-i-4];
 
