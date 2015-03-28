@@ -69,18 +69,31 @@ public class SendThread extends Thread {
 
             switch(message_args[0]){
                 case "BACKUP": {
-                    System.out.println("Chunk command prompted");
+                    System.out.println("Backup command prompted");
 
                     if(message_args.length != 4) {
                         System.out.println("Usage: BACKUP <FILE> <VERSION> <REPLICATION DEGREE>");
                     }
                     else {
 
-                        //send file in chunk to other peers
+                        //send file in chunks to other peers
                         sendFileChunks(message_args);
 
                     }
 
+                }
+                case "RESTORE": {
+                    System.out.println("Restore command prompted");
+
+                    if(message_args.length != 3) {
+                        System.out.println("Usage: RESTORE <FILE> <VERSION>");
+                    }
+                    else {
+
+                        //retrieve chunk from other peers
+                        retriveChunks(message_args);
+
+                    }
                 }
                 break;
                 default: {
@@ -93,6 +106,43 @@ public class SendThread extends Thread {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    private void retriveChunks(String[] message_args) throws IOException {
+        String fileId = message_args[1];
+
+        message_args[1] = encryptFileId(fileId);
+
+        int chunkSize = 64000;
+        int chunkNo = 0;
+
+        while (chunkSize >= 64000 && chunkNo < 5) {
+
+            byte[] buf = new byte[0];
+            buf = createRestoreMessage(message_args, String.valueOf(chunkNo));
+
+            DatagramPacket packet = new DatagramPacket(buf, buf.length, mc_address, mc_port);
+            mc_socket.send(packet);
+
+            chunkNo++;
+        }
+
+    }
+
+    private byte[] createRestoreMessage(String[] message_args, String chunkNo) {
+
+        String command = "GETCHUNK " + message_args[2] + " " + message_args[1] + " " + chunkNo + " ";
+        byte[] commandBytes = command.getBytes();
+
+        //build termination token
+        byte[] crlf = Partials.createCRLFToken();
+
+        //header
+        byte[] header = new byte[commandBytes.length + crlf.length];
+        System.arraycopy(commandBytes, 0, header, 0, commandBytes.length);
+        System.arraycopy(crlf, 0, header, commandBytes.length, crlf.length);
+
+        return header;
     }
 
     private void sendFileChunks(String[] message_args) throws IOException, InterruptedException {

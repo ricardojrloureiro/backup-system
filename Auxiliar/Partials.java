@@ -1,6 +1,7 @@
 package Auxiliar;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
@@ -136,5 +137,66 @@ public class Partials {
         fileOut.write(fullData.getBytes());
         fileOut.close();
 
+    }
+
+    public static ArrayList<Object> parseMessage(byte[] data, int length) {
+        ArrayList<byte[]> header_body = splitMessageData(data,length);
+
+        byte[] header_data = header_body.get(0);
+        byte[] body_data = header_body.get(1);
+
+        System.out.println("Body size receiver: " + body_data.length);
+
+        ArrayList<Object> splitMessage = new ArrayList<>();
+
+        splitMessage.add(new String(header_data, 0, header_data.length));
+        splitMessage.add(body_data);
+
+        return splitMessage;
+    }
+
+    private static ArrayList<byte[]> splitMessageData(byte[] data, int length) {
+        ArrayList<byte[]> header_body = new ArrayList<>();
+
+        for(int i = 0; i < data.length; i++) {
+            if(data[i] == 0xD && data[i+1] == 0xA) { //first CR char of the separator
+                byte[] header = new byte[i];
+                byte[] body = new byte[length-i-4];
+
+                System.arraycopy(data, 0, header, 0, i - 1);
+                System.arraycopy(data,i+4,body,0,length-i-4); //advance the separator
+
+                header_body.add(header);
+                header_body.add(body);
+
+                break;
+            }
+        }
+
+        return header_body;
+    }
+
+    public static boolean chunkExists(String version, String fileId, String chunkNo, String dir) {
+
+        System.out.println("Inside Chunk Exists");
+
+        System.out.println(version + "SIM");
+        System.out.println(fileId + "SIM");
+        System.out.println(chunkNo + "SIM");
+        System.out.println(dir + "SIM");
+
+        String filePath = dir + "/" + chunkNo + "-" + fileId;
+        String[] splitPath = filePath.split(" ");
+        for(String s: splitPath) {
+            System.out.println(s);
+        }
+        System.out.println(filePath);
+
+        File f = new File(filePath);
+        if(f.exists() && !f.isDirectory()) {
+            return true;
+        }
+
+        return false;
     }
 }

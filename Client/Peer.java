@@ -2,6 +2,7 @@ package Client;
 
 import Auxiliar.Partials;
 import Server.ReceiveThread;
+import Server.ReceiverCreator;
 import Server.SendThread;
 
 import java.io.IOException;
@@ -20,14 +21,19 @@ public class Peer {
         }
 
         Partials.createPeerDirectory(args[6],args[7]);
-
+        /*
         new ReceiveThread(args[0],Integer.parseInt(args[1]),
                 args[2],Integer.parseInt(args[3]),
                 args[4],Integer.parseInt(args[5]),"Peers/"+args[6]).start();
-
+        */
         new SendThread(args[0],Integer.parseInt(args[1]),
                 args[2],Integer.parseInt(args[3]),
                 args[4],Integer.parseInt(args[5])).start();
+
+
+        new ReceiverCreator(args[0],Integer.parseInt(args[1]),
+                args[2],Integer.parseInt(args[3]),
+                args[4],Integer.parseInt(args[5]),"Peers/"+args[6]);
     }
 
 }
