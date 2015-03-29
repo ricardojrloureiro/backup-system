@@ -114,16 +114,13 @@ public class Partials {
         BufferedReader input = new BufferedReader(new FileReader(currentDir + "/conf.csv"));
         String line, fullData="";
         String lineToUpdate = null;
-        String expectedChunk = chunkNo;
+        String expectedChunk = chunkNo.trim();
 
         while((line=input.readLine()) != null) {
             String[] separatedLine = line.split(",");
             if(separatedLine != null) {
-                if(separatedLine[1].equals(filename)) {
-
-                    System.out.println("#expected" + chunkNo +  "#" +chunkNo.length() + );
-                    System.out.println("#actual" + separatedLine[2] + "#" + separatedLine[2].length());
-
+                if(separatedLine[1].equals(filename)
+                        && expectedChunk.equals(separatedLine[2])) {
                     String[] split = line.split(",");
                     split[4] = String.valueOf(Integer.parseInt(split[4])+1);
                     line = "";
@@ -192,6 +189,7 @@ public class Partials {
         System.out.println(dir + "SIM");
 
         String filePath = dir + "/" + chunkNo + "-" + fileId;
+        filePath = filePath.trim();
         String[] splitPath = filePath.split(" ");
         for(String s: splitPath) {
             System.out.println(s);
