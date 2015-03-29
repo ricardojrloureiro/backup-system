@@ -9,9 +9,6 @@ import java.net.MulticastSocket;
 import java.util.ArrayList;
 import java.util.Random;
 
-/**
- * Created by Tiago on 28-03-2015.
- */
 public class MCReceiverThread extends Thread {
 
     private String currentDir;
@@ -88,12 +85,12 @@ public class MCReceiverThread extends Thread {
             String[] header_args = header.split(" ");
 
             if (header_args[0].equals("STORED")) {
-                //try {
+                try {
                     System.out.println("Incrementing value stored");
-                    //Partials.changeRepDegree(currentDir, header_args[2]);
-               // } catch (IOException e) {
-                   // e.printStackTrace();
-                //}
+                    Partials.changeRepDegree(currentDir, header_args[2]);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
             else if(header_args[0].equals("GETCHUNK")) {
                 System.out.println("Inside GETCHUNK");
