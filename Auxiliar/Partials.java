@@ -4,9 +4,6 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-/**
- * Created by Tiago on 26/03/2015.
- */
 public class Partials {
 
     public static byte[] createCRLFToken() {
@@ -62,7 +59,7 @@ public class Partials {
     }
 
     public static boolean updateConfFile(String currentDir, String[] header_args, byte[] bytes) {
-        BufferedWriter writer = null;
+       BufferedWriter writer = null;
         try {
             writer = new BufferedWriter(new FileWriter(currentDir + "/conf.csv",true));
 
@@ -72,7 +69,8 @@ public class Partials {
 
             if(difference>0){
                 //updates file
-                writer.write(header_args[1] + "," + header_args[2]+","+header_args[3]+","+header_args[4]+","+"0"+","+String.valueOf(difference));
+                writer.write(header_args[1] + "," + header_args[2]+","+header_args[3]+","
+                        +header_args[4]+","+"0"+","+String.valueOf(difference));
                 writer.newLine();
                 writer.close();
                 return true;
@@ -84,7 +82,6 @@ public class Partials {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
         return false;
     }
 
@@ -120,23 +117,29 @@ public class Partials {
 
         while((line=input.readLine()) != null) {
             String[] separatedLine = line.split(",");
-            if(separatedLine.length>1) {
-                if (separatedLine[1].equals(filename)) {
-                    separatedLine[4] = String.valueOf(Integer.parseInt(separatedLine[4]) + 1);
-                    String newString = Arrays.toString(separatedLine);
-                    newString = newString.substring(1,newString.length()-1);
-                    fullData += newString + '\n';
-                } else {
-                    fullData += line + '\n';
+            if(separatedLine != null) {
+                if(separatedLine[1].equals(filename)) {
+                    String[] split = line.split(",");
+                    split[4] = String.valueOf(Integer.parseInt(split[4])+1);
+                    line = "";
+                    for(int i=0;i<split.length;i++) {
+                        line += split[i];
+                        if(i+1 < split.length) {
+                            line += ",";
+                        }
+                    }
                 }
+                System.out.println("new line is: " + line);
+                fullData += line + '\n';
             }
         }
         input.close();
 
+        System.out.println("\n" + "\n" + "Full data: " + fullData + "\n" + "\n");
+
         FileOutputStream fileOut = new FileOutputStream(currentDir + "/conf.csv");
         fileOut.write(fullData.getBytes());
         fileOut.close();
-
     }
 
     public static ArrayList<Object> parseMessage(byte[] data, int length) {

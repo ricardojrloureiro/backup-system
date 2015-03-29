@@ -75,10 +75,8 @@ public class SendThread extends Thread {
                         System.out.println("Usage: BACKUP <FILE> <VERSION> <REPLICATION DEGREE>");
                     }
                     else {
-
                         //send file in chunks to other peers
                         sendFileChunks(message_args);
-
                     }
 
                 }
@@ -91,7 +89,7 @@ public class SendThread extends Thread {
                     else {
 
                         //retrieve chunk from other peers
-                        retriveChunks(message_args);
+                        retrieveChunks(message_args);
 
                     }
                 }
@@ -108,7 +106,7 @@ public class SendThread extends Thread {
         }
     }
 
-    private void retriveChunks(String[] message_args) throws IOException {
+    private void retrieveChunks(String[] message_args) throws IOException {
         String fileId = message_args[1];
 
         message_args[1] = encryptFileId(fileId);
@@ -154,7 +152,6 @@ public class SendThread extends Thread {
 
         //encrypt filename before sending the message
         message_args[1] = encryptFileId(fileId);
-
 
         //send all chunks
         for(int i = 0; i < chunks.size(); i++) {
@@ -252,7 +249,8 @@ public class SendThread extends Thread {
         return output;
     }
 
-    public byte[] createBackupMessage(Chunk chunk, String[] message_args) throws UnsupportedEncodingException, NoSuchAlgorithmException {
+    public byte[] createBackupMessage(Chunk chunk, String[] message_args)
+            throws UnsupportedEncodingException, NoSuchAlgorithmException {
 
         StringBuilder builder = new StringBuilder();
 
@@ -261,7 +259,8 @@ public class SendThread extends Thread {
             builder.append(" ");
         }
 
-        String command = "PUTCHUNK " + message_args[2] + " " + message_args[1] + " " + chunk.getChunkNumber() + " " + message_args[3] + " ";
+        String command = "PUTCHUNK " + message_args[2] + " " + message_args[1] + " " +
+                chunk.getChunkNumber() + " " + message_args[3] + " ";
         byte[] commandBytes = command.getBytes();
 
         //build termination token

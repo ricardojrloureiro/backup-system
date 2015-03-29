@@ -1,7 +1,6 @@
 package Client;
 
 import Auxiliar.Partials;
-import Server.ReceiveThread;
 import Server.ReceiverCreator;
 import Server.SendThread;
 
