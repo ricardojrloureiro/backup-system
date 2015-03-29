@@ -87,7 +87,7 @@ public class MCReceiverThread extends Thread {
             if (header_args[0].equals("STORED")) {
                 try {
                     System.out.println("Incrementing value stored");
-                    Partials.changeRepDegree(currentDir, header_args[2]);
+                    Partials.changeRepDegree(currentDir, header_args[2], header_args[3]);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

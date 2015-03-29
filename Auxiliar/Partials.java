@@ -59,7 +59,7 @@ public class Partials {
     }
 
     public static boolean updateConfFile(String currentDir, String[] header_args, byte[] bytes) {
-       BufferedWriter writer = null;
+      BufferedWriter writer = null;
         try {
             writer = new BufferedWriter(new FileWriter(currentDir + "/conf.csv",true));
 
@@ -108,17 +108,22 @@ public class Partials {
         return 0;
     }
 
-    public static void changeRepDegree(String currentDir, String filename)
+    public static void changeRepDegree(String currentDir, String filename, String chunkNo)
             throws IOException {
 
         BufferedReader input = new BufferedReader(new FileReader(currentDir + "/conf.csv"));
         String line, fullData="";
         String lineToUpdate = null;
+        String expectedChunk = chunkNo;
 
         while((line=input.readLine()) != null) {
             String[] separatedLine = line.split(",");
             if(separatedLine != null) {
                 if(separatedLine[1].equals(filename)) {
+
+                    System.out.println("#expected" + chunkNo +  "#" +chunkNo.length() + );
+                    System.out.println("#actual" + separatedLine[2] + "#" + separatedLine[2].length());
+
                     String[] split = line.split(",");
                     split[4] = String.valueOf(Integer.parseInt(split[4])+1);
                     line = "";
@@ -134,8 +139,6 @@ public class Partials {
             }
         }
         input.close();
-
-        System.out.println("\n" + "\n" + "Full data: " + fullData + "\n" + "\n");
 
         FileOutputStream fileOut = new FileOutputStream(currentDir + "/conf.csv");
         fileOut.write(fullData.getBytes());
