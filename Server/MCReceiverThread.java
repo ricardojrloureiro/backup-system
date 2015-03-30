@@ -112,6 +112,7 @@ public class MCReceiverThread extends Thread {
                         mdr_socket.setSoTimeout(random);
                         mdr_socket.receive(rpacket);
                         Chunk toSend = null;
+
                         toSend = Partials.getChunkFromFile(header_args[1], header_args[2], header_args[3].trim(), currentDir);
                         sendChunk(toSend, header_args);
                     } catch (SocketTimeoutException e) {

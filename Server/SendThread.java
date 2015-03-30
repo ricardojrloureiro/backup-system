@@ -8,6 +8,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Array;
 import java.math.BigInteger;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
@@ -126,16 +127,30 @@ public class SendThread extends Thread {
             DatagramPacket packet = new DatagramPacket(buf, buf.length, mc_address, mc_port);
             mc_socket.send(packet);
 
-            byte[] receive_buf = new byte[65000];
+            boolean reached=false;
 
-            DatagramPacket receive_packet = new DatagramPacket(receive_buf, receive_buf.length);
-            mdr_socket.receive(receive_packet);
-            System.out.println("Got chunk");
-            ArrayList<Object> splitMessage = Partials.parseMessage(receive_packet.getData(), receive_packet.getLength());
-            byte[] body = (byte[]) splitMessage.get(1);
-            Partials.appendChunk(body,currentDir,fileId);
+            while(!reached) {
+                byte[] receive_buf = new byte[65000];
 
-            chunkNo++;
+                DatagramPacket receive_packet = new DatagramPacket(receive_buf, receive_buf.length);
+                mdr_socket.receive(receive_packet);
+
+                ArrayList<Object> separated = Partials.parseMessage(receive_packet.getData(), receive_packet.getLength());
+
+                String header = (String) separated.get(0);
+                byte[] body = (byte[]) separated.get(1);
+
+                String[] header_parts = header.split(" ");
+                if(header_parts != null)
+                    if(header_parts[0].equals("CHUNK") &&
+                            Integer.parseInt(header_parts[3].trim())==chunkNo) {
+
+                        Partials.appendChunk(body, currentDir, fileId);
+                        chunkNo++;
+                        reached=true;
+                    }
+            }
+
         }
 
     }

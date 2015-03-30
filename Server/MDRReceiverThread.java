@@ -12,7 +12,6 @@ import java.util.concurrent.BlockingQueue;
 
 public class MDRReceiverThread extends Thread {
 
-    private BlockingQueue bq;
     private String currentDir;
     private InetAddress mc_address;
     private InetAddress mdb_address;
@@ -55,7 +54,6 @@ public class MDRReceiverThread extends Thread {
         this.currentDir = dir;
 
         this.mc_thread = mc_thread;
-        this.bq = bq;
     }
 
     public void run() {
@@ -94,11 +92,6 @@ public class MDRReceiverThread extends Thread {
 
             if (header_args[0].equals("CHUNK")) {
 
-                try {
-                    bq.put("do not send");
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
 
 
             }
