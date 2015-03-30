@@ -116,10 +116,10 @@ public class SendThread extends Thread {
 
         message_args[1] = encryptFileId(fileId);
 
-        int chunkSize = 64000;
         int chunkNo = 0;
+        boolean eof=false;
 
-        while (chunkSize == 64000) {
+        while (!eof) {
 
             byte[] buf;
             buf = createRestoreMessage(message_args, String.valueOf(chunkNo));
@@ -146,13 +146,15 @@ public class SendThread extends Thread {
                             Integer.parseInt(header_parts[3].trim())==chunkNo) {
 
                         Partials.appendChunk(body, currentDir, fileId);
+                        if(body.length < 64000) {
+                            eof=true;
+                        }
                         chunkNo++;
                         reached=true;
                     }
             }
-
         }
-
+        System.out.println("Reached the end of the file");
     }
 
     private byte[] createRestoreMessage(String[] message_args, String chunkNo) {
