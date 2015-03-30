@@ -23,7 +23,7 @@ public class Peer {
 
         new SendThread(args[0],Integer.parseInt(args[1]),
                 args[2],Integer.parseInt(args[3]),
-                args[4],Integer.parseInt(args[5])).start();
+                args[4],Integer.parseInt(args[5]),"Peers/"+args[6]).start();
 
 
         new ReceiverCreator(args[0],Integer.parseInt(args[1]),

@@ -19,6 +19,7 @@ import java.util.ArrayList;
 
 public class SendThread extends Thread {
 
+    private String currentDir;
     //addresses
     private InetAddress mc_address;
     private InetAddress mdr_address;
@@ -34,7 +35,7 @@ public class SendThread extends Thread {
     private MulticastSocket mdr_socket;
     private MulticastSocket mdb_socket;
 
-    public SendThread(String mc, int mc_port, String mdb, int mdb_port, String mdr, int mdr_port)
+    public SendThread(String mc, int mc_port, String mdb, int mdb_port, String mdr, int mdr_port, String dir)
             throws IOException {
 
         //Initiation of mc channel
@@ -49,12 +50,15 @@ public class SendThread extends Thread {
         this.mdr_port = mdr_port;
         this.mdr_socket = new MulticastSocket(mdr_port);
         this.mdr_socket.setTimeToLive(1);
+        mdr_socket.joinGroup(mdr_address);
 
         //Initiation of mdb channel
         this.mdb_address = InetAddress.getByName(mdb);
         this.mdb_port = mdb_port;
         this.mdb_socket = new MulticastSocket(mdb_port);
         this.mdb_socket.setTimeToLive(1);
+
+        this.currentDir = dir;
 
     }
 
@@ -114,13 +118,22 @@ public class SendThread extends Thread {
         int chunkSize = 64000;
         int chunkNo = 0;
 
-        while (chunkSize >= 64000 && chunkNo < 5) {
+        while (chunkSize == 64000) {
 
-            byte[] buf = new byte[0];
+            byte[] buf;
             buf = createRestoreMessage(message_args, String.valueOf(chunkNo));
 
             DatagramPacket packet = new DatagramPacket(buf, buf.length, mc_address, mc_port);
             mc_socket.send(packet);
+
+            byte[] receive_buf = new byte[65000];
+
+            DatagramPacket receive_packet = new DatagramPacket(receive_buf, receive_buf.length);
+            mdr_socket.receive(receive_packet);
+            System.out.println("Got chunk");
+            ArrayList<Object> splitMessage = Partials.parseMessage(receive_packet.getData(), receive_packet.getLength());
+            byte[] body = (byte[]) splitMessage.get(1);
+            Partials.appendChunk(body,currentDir,fileId);
 
             chunkNo++;
         }
@@ -215,12 +228,9 @@ public class SendThread extends Thread {
     }
 
     public void sendChunk(Chunk currentChunk, String[] message_args) throws IOException, InterruptedException {
-        byte[] buf = new byte[0];
-        try {
-            buf = createBackupMessage(currentChunk, message_args);
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
+        byte[] buf;
+
+        buf = createBackupMessage(currentChunk, message_args);
 
         DatagramPacket packet = new DatagramPacket(buf, buf.length, mdb_address, mdb_port);
         mdb_socket.send(packet);
@@ -249,14 +259,7 @@ public class SendThread extends Thread {
     }
 
     public byte[] createBackupMessage(Chunk chunk, String[] message_args)
-            throws UnsupportedEncodingException, NoSuchAlgorithmException {
-
-        StringBuilder builder = new StringBuilder();
-
-        for(String s : message_args) {
-            builder.append(s);
-            builder.append(" ");
-        }
+            throws UnsupportedEncodingException {
 
         String command = "PUTCHUNK " + message_args[2] + " " + message_args[1] + " " +
                 chunk.getChunkNumber() + " " + message_args[3] + " ";

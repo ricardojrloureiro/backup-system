@@ -1,11 +1,11 @@
 package Server;
 
+import Auxiliar.Chunk;
 import Auxiliar.Partials;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.InetAddress;
-import java.net.MulticastSocket;
+import java.net.*;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -20,8 +20,9 @@ public class MCReceiverThread extends Thread {
     private int mdr_port;
 
     private boolean state;
+    private boolean sendChunk;
 
-    private MulticastSocket mc_socket, mdb_socket, mcr_socket;
+    private MulticastSocket mc_socket, mdb_socket, mdr_socket;
 
     public MCReceiverThread(String mc, int mc_port, String mdb, int mdb_port, String mdr, int mdr_port, String dir) throws IOException {
         state=true;
@@ -45,15 +46,21 @@ public class MCReceiverThread extends Thread {
         this.mdb_socket = new MulticastSocket(this.mdb_port);
         this.mdb_socket.setTimeToLive(1);
 
-        this.mcr_socket = new MulticastSocket(this.mdr_port);
-        this.mcr_socket.setTimeToLive(1);
+        this.mdr_socket = new MulticastSocket(this.mdr_port);
+        this.mdr_socket.setTimeToLive(1);
 
         this.currentDir = dir;
+        this.sendChunk = true;
+    }
+
+    public void setSendChunk(boolean sendChunk) {
+        this.sendChunk = sendChunk;
     }
 
     public void run() {
         try {
             mc_socket.joinGroup(mc_address);
+            mdr_socket.joinGroup(mdr_address);
         } catch (IOException e) {
             System.out.println("Could not join mdb group");
             e.printStackTrace();
@@ -94,20 +101,74 @@ public class MCReceiverThread extends Thread {
             }
             else if(header_args[0].equals("GETCHUNK")) {
                 System.out.println("Inside GETCHUNK");
-                System.out.println("CHUNK NO: " + header_args[3] + "SIM");
-                if(Partials.chunkExists(header_args[1],header_args[2],header_args[3],currentDir)){
+                if(Partials.chunkExists(header_args[1],header_args[2],header_args[3].trim(),currentDir)) {
                     System.out.println("Chunk exists.");
+
+                    int random = new Random().nextInt(401);
+                    byte[] rbuf = new byte[65000];
+                    DatagramPacket rpacket = new DatagramPacket(rbuf, rbuf.length);
+
                     try {
-                        wait(new Random().nextInt(401));
-                        System.out.println("SEND CHUNK 1");
-                    } catch (InterruptedException e) {
-                        System.out.println("SEND CHUNK");
-                        //e.printStackTrace();
+                        mdr_socket.setSoTimeout(random);
+                        mdr_socket.receive(rpacket);
+                        Chunk toSend = null;
+                        toSend = Partials.getChunkFromFile(header_args[1], header_args[2], header_args[3].trim(), currentDir);
+                        sendChunk(toSend, header_args);
+                    } catch (SocketTimeoutException e) {
+                        Chunk toSend = null;
+                        try {
+                            toSend = Partials.getChunkFromFile(header_args[1], header_args[2], header_args[3].trim(), currentDir);
+                            sendChunk(toSend, header_args);
+                        } catch (IOException e1) {
+                            e1.printStackTrace();
+                        }
+                    } catch (SocketException e) {
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
                 }
+
             }
 
         }
 
     }
+
+    private void sendChunk(Chunk toSend, String[] header_args) throws IOException {
+        byte[] buf;
+
+        buf = createChunkMessage(toSend, header_args);
+
+        DatagramPacket packet = new DatagramPacket(buf, buf.length, mdr_address, mdr_port);
+        mdr_socket.send(packet);
+    }
+
+    private byte[] createChunkMessage(Chunk chunk, String[] message_args) {
+
+        String command = "CHUNK " + message_args[1] + " " + message_args[2] + " " +
+                chunk.getChunkNumber() + " ";
+        byte[] commandBytes = command.getBytes();
+
+        //build termination token
+        byte[] crlf = Partials.createCRLFToken();
+
+        //header
+        byte[] header = new byte[commandBytes.length + crlf.length];
+        System.arraycopy(commandBytes, 0, header, 0, commandBytes.length);
+        System.arraycopy(crlf, 0, header, commandBytes.length, crlf.length);
+
+        //body
+        byte[] body = chunk.getBody();
+        System.out.println("Body size sender: " + body.length);
+
+        //final message
+        byte[] message = new byte[header.length + body.length];
+        System.arraycopy(header, 0, message, 0, header.length);
+        System.arraycopy(body, 0, message, header.length, body.length);
+
+        return message;
+
+    }
+
 }

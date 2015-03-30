@@ -1,6 +1,9 @@
 package Auxiliar;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -70,7 +73,7 @@ public class Partials {
             if(difference>0){
                 //updates file
                 writer.write(header_args[1] + "," + header_args[2]+","+header_args[3]+","
-                        +header_args[4]+","+"0"+","+String.valueOf(difference));
+                        +header_args[4].trim()+","+"0"+","+String.valueOf(difference));
                 writer.newLine();
                 writer.close();
                 return true;
@@ -181,26 +184,36 @@ public class Partials {
 
     public static boolean chunkExists(String version, String fileId, String chunkNo, String dir) {
 
-        System.out.println("Inside Chunk Exists");
-
-        System.out.println(version + "SIM");
-        System.out.println(fileId + "SIM");
-        System.out.println(chunkNo + "SIM");
-        System.out.println(dir + "SIM");
-
-        String filePath = dir + "/" + chunkNo + "-" + fileId;
-        filePath = filePath.trim();
-        String[] splitPath = filePath.split(" ");
-        for(String s: splitPath) {
-            System.out.println(s);
-        }
-        System.out.println(filePath);
-
+        String filePath = (dir + "/" + chunkNo + "-" + fileId).trim();
+        System.out.println("File Path: " + filePath);
         File f = new File(filePath);
         if(f.exists() && !f.isDirectory()) {
             return true;
         }
 
         return false;
+    }
+
+    public static Chunk getChunkFromFile(String version, String fileId, String chunkNo, String dir) throws IOException {
+        String filePath = (dir + "/" + chunkNo + "-" + fileId).trim();
+
+        byte[] content = Files.readAllBytes(Paths.get(filePath));
+
+        return new Chunk(Integer.parseInt(chunkNo),content);
+    }
+
+    public static void appendChunk(byte[] buf, String dir, String fileName) throws IOException {
+        String filePath = (dir + "/" + fileName).trim();
+        File f = new File(filePath);
+
+        if(!f.exists()) {
+            f.createNewFile();
+        }
+
+        FileOutputStream fileWriter = new FileOutputStream(filePath,true);
+        fileWriter.write(buf);
+        fileWriter.close();
+
+
     }
 }

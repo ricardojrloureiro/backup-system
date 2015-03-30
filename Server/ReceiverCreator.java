@@ -1,14 +1,20 @@
 package Server;
 
 import java.io.IOException;
+import java.util.Random;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
 public class ReceiverCreator {
     public ReceiverCreator(String mc, int mc_port, String mdb, int mdb_port, String mdr,
                            int mdr_port, String dir) throws IOException {
 
+
+
         //creates the 3 channels required for the different sockets
-        new MCReceiverThread(mc,mc_port,mdb,mdb_port,mdr,mdr_port,dir).start();
-        new MDRReceiverThread(mc,mc_port,mdb,mdb_port,mdr,mdr_port,dir).start();
+        Thread mc_thread = new MCReceiverThread(mc,mc_port,mdb,mdb_port,mdr,mdr_port,dir);
+        mc_thread.start();
+        //new MDRReceiverThread(mc,mc_port,mdb,mdb_port,mdr,mdr_port,dir,mc_thread).start();
         new MDBReceiverThread(mc,mc_port,mdb,mdb_port,mdr,mdr_port,dir).start();
     }
 }
