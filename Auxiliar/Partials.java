@@ -72,6 +72,8 @@ public class Partials {
             int currentSpace = getCurrentSpace(currentDir);
             int difference = currentSpace-bytes.length;
 
+            System.out.println("DIFFERENCE: " + difference);
+
             if(difference>0){
                 //updates file
                 writer.write(header_args[1] + "," + header_args[2]+","+header_args[3]+","
@@ -222,7 +224,7 @@ public class Partials {
 
         BufferedReader input = new BufferedReader(new FileReader(dir + "/conf.csv"));
         String line, fullData="";
-        int toAdd = 0, lineNum = 1, prevSpace = 0;
+        int toAdd = 0, prevSpace = 0;
         System.out.println("Changing conf file");
         while((line=input.readLine()) != null) {
 
@@ -267,7 +269,6 @@ public class Partials {
                     if (!line.equals(""))
                         fullData += line + '\n';
 
-                lineNum++;
             }
         }
         input.close();
@@ -289,5 +290,99 @@ public class Partials {
         else {
             System.out.println("Could not delete file " + dir + "/" + chunkNo + "-" + fileId);
         }
+    }
+
+    public static void removeChunk(String currentDir) throws IOException {
+
+        int lineNo = getChunkWithHighDeg(currentDir);
+        System.out.println("lineNo: " + lineNo);
+
+        BufferedReader input = new BufferedReader(new FileReader(currentDir + "/conf.csv"));
+        String line, fullData="";
+        int toAdd = 0, currentLine = 0, prevSpace = 0;
+
+        while((line=input.readLine()) != null) {
+
+            String[] separatedLine = line.split(",");
+
+            if (separatedLine != null) {
+
+                if (currentLine == lineNo) {
+
+                    String[] split = line.split(",");
+
+                    toAdd += prevSpace - Integer.parseInt(split[5]);
+                    prevSpace = Integer.parseInt(split[5]);
+
+                    System.out.println("Delete.");
+                    deleteChunk(split[2].trim(), split[1].trim(), currentDir.trim());
+
+                    line = "";
+
+                } else {
+
+                    String[] split = line.split(",");
+
+                    if (!split[5].equals("currentSpace") && !split[5].equals("")){//first two lines
+                        split[5] = String.valueOf(Integer.parseInt(split[5]) + toAdd);
+                        System.out.println("total size: " + split[5]);
+                        prevSpace = Integer.parseInt(split[5]);
+                    }
+
+
+                    line = "";
+
+                    for (int i = 0; i < split.length; i++) {
+                        line += split[i];
+                        if (i + 1 < split.length) {
+                            line += ",";
+                        }
+                    }
+
+                }
+
+                if (!line.equals(""))
+                    fullData += line + '\n';
+
+            }
+            currentLine++;
+        }
+        input.close();
+
+        FileOutputStream fileOut = new FileOutputStream(currentDir + "/conf.csv");
+        fileOut.write(fullData.getBytes());
+        fileOut.close();
+
+    }
+
+    private static int getChunkWithHighDeg(String currentDir) throws IOException {
+
+        BufferedReader input = new BufferedReader(new FileReader(currentDir + "/conf.csv"));
+        String line;
+        int maxDeg = 0;
+        int lineNo = 0;
+        int lineMax = 0;
+
+        while((line=input.readLine()) != null) {
+
+            String[] separatedLine = line.split(",");
+
+            if (separatedLine != null) {
+
+                if (!separatedLine[4].equals("RepDegAct") && !separatedLine[4].equals("")){//first two lines
+                    int deg = Integer.parseInt(separatedLine[4]);
+                    if(deg > maxDeg){
+                        maxDeg = deg;
+                        lineMax = lineNo;
+                    }
+                }
+
+            }
+
+            lineNo++;
+        }
+        input.close();
+
+        return lineMax;
     }
 }

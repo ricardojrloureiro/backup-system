@@ -99,27 +99,42 @@ public class MDBReceiverThread extends Thread {
 
                 //save file in storage if there is enough available space
                 if(Partials.updateConfFile(currentDir, header_args, body)) {
+                    storeChunk(body, header_args, fileName);
+                }
+                else { //remove one chunk to store the new one
+                    System.out.println("HAS TO REMOVE");
                     try {
-                        saveChunk(body, header_args[3] + "-" + fileName);
+                        Partials.removeChunk(currentDir);
                     } catch (IOException e) {
-                        e.printStackTrace();
+                        System.out.println("Could not remove chunk");
                     }
-
-                    Random r = new Random();
-                    int delay = r.nextInt(401);
-                    try {
-                        sleep(delay);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    System.out.println("Sending STORE");
-                    sendStoredMessage(header_args);
+                    Partials.updateConfFile(currentDir,header_args,body);
+                    storeChunk(body, header_args, fileName);
+                    //sendRemovedMessage()
                 }
 
             }
 
         }
 
+    }
+
+    private void storeChunk(byte[] body, String[] header_args, String fileName) {
+        try {
+            saveChunk(body, header_args[3] + "-" + fileName);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        Random r = new Random();
+        int delay = r.nextInt(401);
+        try {
+            sleep(delay);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        System.out.println("Sending STORE");
+        sendStoredMessage(header_args);
     }
 
     private void sendStoredMessage(String[] header_args) {
