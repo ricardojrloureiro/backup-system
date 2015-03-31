@@ -1,11 +1,13 @@
 package Auxiliar;
 
+import javax.annotation.processing.SupportedSourceVersion;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Objects;
 
 public class Partials {
 
@@ -134,7 +136,6 @@ public class Partials {
                         }
                     }
                 }
-                System.out.println("new line is: " + line);
                 fullData += line + '\n';
             }
         }
@@ -215,5 +216,72 @@ public class Partials {
         fileWriter.close();
 
 
+    }
+
+    public static void deleteChunks(String version, String fileId, String dir) throws IOException {
+
+        BufferedReader input = new BufferedReader(new FileReader(dir + "/conf.csv"));
+        String line, fullData="";
+        int toAdd = 0;
+        System.out.println("Changing conf file");
+        while((line=input.readLine()) != null) {
+
+            String[] separatedLine = line.split(",");
+
+            if(separatedLine != null) {
+
+                if(separatedLine[1].equals(fileId.trim()) && separatedLine[0].equals(version)) {
+                    System.out.println("Entered if");
+                    String[] split = line.split(",");
+
+                    toAdd += Integer.parseInt(split[5]) - toAdd;
+                    System.out.println("to add: " + toAdd);
+
+                    deleteChunk(split[2].trim(),split[1].trim(),dir.trim());
+
+                    line = "";
+
+                }
+                else {
+
+                    String[] split = line.split(",");
+
+                    if(!split[5].equals("currentSpace") && !split[5].equals("")) //first two lines
+                        split[5] = String.valueOf(Integer.parseInt(split[5])+toAdd);
+
+                    line = "";
+
+                    for(int i=0;i<split.length;i++) {
+                        line += split[i];
+                        if(i+1 < split.length) {
+                            line += ",";
+                        }
+                    }
+
+                }
+
+                if(!line.equals(""))
+                    fullData += line + '\n';
+            }
+        }
+        input.close();
+
+
+        FileOutputStream fileOut = new FileOutputStream(dir + "/conf.csv");
+        fileOut.write(fullData.getBytes());
+        fileOut.close();
+
+    }
+
+    private static void deleteChunk(String chunkNo, String fileId, String dir) {
+        System.out.println("Deleting chunk");
+        File f = new File(dir + "/" + chunkNo + "-" + fileId);
+
+        if(f.delete()) {
+            System.out.println("File " + dir + "/" + chunkNo + "-" + fileId + " deleted successfully");
+        }
+        else {
+            System.out.println("Could not delete file " + dir + "/" + chunkNo + "-" + fileId);
+        }
     }
 }

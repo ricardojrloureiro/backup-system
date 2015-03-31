@@ -83,7 +83,7 @@ public class SendThread extends Thread {
                         //send file in chunks to other peers
                         sendFileChunks(message_args);
                     }
-
+                    break;
                 }
                 case "RESTORE": {
                     System.out.println("Restore command prompted");
@@ -98,10 +98,22 @@ public class SendThread extends Thread {
 
                     }
                 }
-                break;
+                case "DELETE": {
+                    System.out.println("Delete command prompted");
+
+                    if(message_args.length != 3) {
+                        System.out.println("Usage: DELETE <FILE> <VERSION>");
+                    }
+                    else {
+                        //notify other peers that file was deleted
+                        notifyFileDeletion(message_args);
+                    }
+                    break;
+                }
                 default: {
                     System.out.println("Invalid command, please try again");
-                } break;
+                    break;
+                }
             }
 
         } catch (IOException e) {
@@ -109,6 +121,37 @@ public class SendThread extends Thread {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    private void notifyFileDeletion(String[] message_args) throws IOException {
+        String fileId = message_args[1];
+
+        message_args[1] = encryptFileId(fileId);
+
+        //send DELETE message 5 times to ensure chunk deletion on other peers
+        for(int i = 0; i < 5; i++) {
+            byte[] buf;
+            buf = createDeleteMessage(message_args);
+
+            DatagramPacket packet = new DatagramPacket(buf, buf.length, mc_address, mc_port);
+            mc_socket.send(packet);
+        }
+
+    }
+
+    private byte[] createDeleteMessage(String[] message_args) {
+        String command = "DELETE " + message_args[2] + " " + message_args[1] + " ";
+        byte[] commandBytes = command.getBytes();
+
+        //build termination token
+        byte[] crlf = Partials.createCRLFToken();
+
+        //header
+        byte[] header = new byte[commandBytes.length + crlf.length];
+        System.arraycopy(commandBytes, 0, header, 0, commandBytes.length);
+        System.arraycopy(crlf, 0, header, commandBytes.length, crlf.length);
+
+        return header;
     }
 
     private void retrieveChunks(String[] message_args) throws IOException {
@@ -158,7 +201,6 @@ public class SendThread extends Thread {
     }
 
     private byte[] createRestoreMessage(String[] message_args, String chunkNo) {
-
         String command = "GETCHUNK " + message_args[2] + " " + message_args[1] + " " + chunkNo + " ";
         byte[] commandBytes = command.getBytes();
 

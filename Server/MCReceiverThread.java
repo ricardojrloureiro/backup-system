@@ -131,6 +131,16 @@ public class MCReceiverThread extends Thread {
                 }
 
             }
+            else if(header_args[0].equals("DELETE")) {
+                //delete all chunks from that file
+                System.out.println("Inside DELETE");
+                try {
+                    Partials.deleteChunks(header_args[1], header_args[2], currentDir);
+                } catch (IOException e) {
+                    System.out.println("Could not delete chunks");
+                    e.printStackTrace();
+                }
+            }
 
         }
 
