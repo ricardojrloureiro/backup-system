@@ -222,46 +222,52 @@ public class Partials {
 
         BufferedReader input = new BufferedReader(new FileReader(dir + "/conf.csv"));
         String line, fullData="";
-        int toAdd = 0;
+        int toAdd = 0, lineNum = 1, prevSpace = 0;
         System.out.println("Changing conf file");
         while((line=input.readLine()) != null) {
 
             String[] separatedLine = line.split(",");
 
-            if(separatedLine != null) {
+            if (separatedLine != null) {
 
-                if(separatedLine[1].equals(fileId.trim()) && separatedLine[0].equals(version)) {
+                if (separatedLine[1].equals(fileId.trim()) && separatedLine[0].equals(version)) {
                     System.out.println("Entered if");
                     String[] split = line.split(",");
 
-                    toAdd += Integer.parseInt(split[5]) - toAdd;
+                    toAdd += prevSpace - Integer.parseInt(split[5]);
                     System.out.println("to add: " + toAdd);
 
-                    deleteChunk(split[2].trim(),split[1].trim(),dir.trim());
+                    prevSpace = Integer.parseInt(split[5]);
+
+                    deleteChunk(split[2].trim(), split[1].trim(), dir.trim());
 
                     line = "";
 
-                }
-                else {
+                } else {
 
                     String[] split = line.split(",");
 
-                    if(!split[5].equals("currentSpace") && !split[5].equals("")) //first two lines
-                        split[5] = String.valueOf(Integer.parseInt(split[5])+toAdd);
+                    if (!split[5].equals("currentSpace") && !split[5].equals("")){//first two lines
+                        split[5] = String.valueOf(Integer.parseInt(split[5]) + toAdd);
+                        prevSpace = Integer.parseInt(split[5]);
+                    }
+
 
                     line = "";
 
-                    for(int i=0;i<split.length;i++) {
+                    for (int i = 0; i < split.length; i++) {
                         line += split[i];
-                        if(i+1 < split.length) {
+                        if (i + 1 < split.length) {
                             line += ",";
                         }
                     }
 
                 }
 
-                if(!line.equals(""))
-                    fullData += line + '\n';
+                    if (!line.equals(""))
+                        fullData += line + '\n';
+
+                lineNum++;
             }
         }
         input.close();
