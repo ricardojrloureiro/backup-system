@@ -53,8 +53,8 @@ public class Partials {
 
         try {
             out = new PrintWriter(config);
-            out.println("Version,FileId,ChunkNo,RepDegMin,RepDegAct,currentSpace");
-            out.println(",,,,," + space);
+            out.println("Version,FileId,ChunkNo,RepDegMin,RepDegAct,chunkSize,currentSpace");
+            out.println(",,,,,," + space);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
@@ -64,7 +64,11 @@ public class Partials {
     }
 
     public static boolean updateConfFile(String currentDir, String[] header_args, byte[] bytes) {
-      BufferedWriter writer = null;
+
+        trimArray(header_args);
+
+        BufferedWriter writer;
+
         try {
             writer = new BufferedWriter(new FileWriter(currentDir + "/conf.csv",true));
 
@@ -76,8 +80,8 @@ public class Partials {
 
             if(difference>0){
                 //updates file
-                writer.write(header_args[1] + "," + header_args[2]+","+header_args[3]+","
-                        +header_args[4].trim()+","+"0"+","+String.valueOf(difference));
+                writer.write(header_args[1] + "," + header_args[2]+ "," + header_args[3]+ "," +
+                             header_args[4] + "," +      "0"      + "," + bytes.length + "," + String.valueOf(difference));
                 writer.newLine();
                 writer.close();
                 return true;
@@ -92,6 +96,12 @@ public class Partials {
         return false;
     }
 
+    private static void trimArray(String[] array) {
+        for(int i = 0; i < array.length; i++) {
+            array[i] = array[i].trim();
+        }
+    }
+
     private static int getCurrentSpace(String currentDir) {
         try {
             BufferedReader input = new BufferedReader(new FileReader(currentDir + "/conf.csv"));
@@ -103,6 +113,8 @@ public class Partials {
             }
 
             String[] separatedLine = last.split(",");
+
+            input.close();
 
             return Integer.parseInt(separatedLine[separatedLine.length-1]);
 
@@ -118,16 +130,18 @@ public class Partials {
     public static void changeRepDegree(String currentDir, String filename, String chunkNo)
             throws IOException {
 
+        currentDir = currentDir.trim();
+        filename = filename.trim();
+        chunkNo = chunkNo.trim();
+
         BufferedReader input = new BufferedReader(new FileReader(currentDir + "/conf.csv"));
         String line, fullData="";
-        String lineToUpdate = null;
         String expectedChunk = chunkNo.trim();
 
         while((line=input.readLine()) != null) {
             String[] separatedLine = line.split(",");
             if(separatedLine != null) {
-                if(separatedLine[1].equals(filename)
-                        && expectedChunk.equals(separatedLine[2])) {
+                if(separatedLine[1].equals(filename) && expectedChunk.equals(separatedLine[2])) {
                     String[] split = line.split(",");
                     split[4] = String.valueOf(Integer.parseInt(split[4])+1);
                     line = "";
@@ -153,8 +167,6 @@ public class Partials {
 
         byte[] header_data = header_body.get(0);
         byte[] body_data = header_body.get(1);
-
-        System.out.println("Body size receiver: " + body_data.length);
 
         ArrayList<Object> splitMessage = new ArrayList<>();
 
@@ -217,14 +229,17 @@ public class Partials {
         fileWriter.write(buf);
         fileWriter.close();
 
-
     }
 
     public static void deleteChunks(String version, String fileId, String dir) throws IOException {
 
+        version = version.trim();
+        fileId = fileId.trim();
+        dir = dir.trim();
+
         BufferedReader input = new BufferedReader(new FileReader(dir + "/conf.csv"));
         String line, fullData="";
-        int toAdd = 0, prevSpace = 0;
+        int toAdd = 0;
         System.out.println("Changing conf file");
         while((line=input.readLine()) != null) {
 
@@ -232,14 +247,12 @@ public class Partials {
 
             if (separatedLine != null) {
 
-                if (separatedLine[1].equals(fileId.trim()) && separatedLine[0].equals(version)) {
+                if (separatedLine[1].equals(fileId) && separatedLine[0].equals(version)) {
                     System.out.println("Entered if");
                     String[] split = line.split(",");
 
-                    toAdd += prevSpace - Integer.parseInt(split[5]);
+                    toAdd += Integer.parseInt(split[5]);
                     System.out.println("to add: " + toAdd);
-
-                    prevSpace = Integer.parseInt(split[5]);
 
                     deleteChunk(split[2].trim(), split[1].trim(), dir.trim());
 
@@ -249,11 +262,9 @@ public class Partials {
 
                     String[] split = line.split(",");
 
-                    if (!split[5].equals("currentSpace") && !split[5].equals("")){//first two lines
-                        split[5] = String.valueOf(Integer.parseInt(split[5]) + toAdd);
-                        prevSpace = Integer.parseInt(split[5]);
+                    if (!split[6].equals("currentSpace") && !split[6].equals("")){//first two lines
+                        split[6] = String.valueOf(Integer.parseInt(split[6]) + toAdd);
                     }
-
 
                     line = "";
 
@@ -273,11 +284,9 @@ public class Partials {
         }
         input.close();
 
-
         FileOutputStream fileOut = new FileOutputStream(dir + "/conf.csv");
         fileOut.write(fullData.getBytes());
         fileOut.close();
-
     }
 
     private static void deleteChunk(String chunkNo, String fileId, String dir) {
@@ -388,13 +397,12 @@ public class Partials {
         return lineMax;
     }
 
-
     public static boolean checkRepDegree(String currentDir, String fileIdRemoved, String chunkNoRemoved)
             throws IOException {
         BufferedReader input = new BufferedReader(new FileReader(currentDir + "/conf.csv"));
         String line, fullData="";
         String lineToUpdate = null;
-        boolean value=true;
+        boolean value=false;
         String expectedChunk = chunkNoRemoved.trim();
 
         while((line=input.readLine()) != null) {
