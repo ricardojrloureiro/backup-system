@@ -143,6 +143,30 @@ public class MCReceiverThread extends Thread {
             }
             else if(header_args[0].equals("REMOVED")) {
                 System.out.println("GOT REMOVED");
+                String fileIdRemoved = header_args[2].trim();
+                String chunkNoRemoved = header_args[3].trim();
+
+                try {
+                    if(Partials.checkRepDegree(currentDir, fileIdRemoved,chunkNoRemoved))
+                        //true if degree is lower then required
+                    {
+                        try {
+                            Chunk toSend = Partials.getChunkFromFile("1",fileIdRemoved,chunkNoRemoved,currentDir);
+                            byte[] putchunk = createPutchunkMessage(fileIdRemoved, chunkNoRemoved, toSend);
+
+                            packet = new DatagramPacket(putchunk, putchunk.length, mdb_address, mdb_port);
+                            mdb_socket.send(packet);
+                            System.out.println("Re-send chunk with the id of #" + chunkNoRemoved);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    } else {
+                        System.out.println("No need to re-send chunk");
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
             }
 
         }
@@ -183,6 +207,31 @@ public class MCReceiverThread extends Thread {
 
         return message;
 
+    }
+
+    private byte[] createPutchunkMessage(String fileId, String chunkNo,Chunk chunk ){
+        String command = "PUTCHUNK " + fileId + " " + chunkNo + " " +
+                chunk.getChunkNumber() + " ";
+        byte[] commandBytes = command.getBytes();
+
+        //build termination token
+        byte[] crlf = Partials.createCRLFToken();
+
+        //header
+        byte[] header = new byte[commandBytes.length + crlf.length];
+        System.arraycopy(commandBytes, 0, header, 0, commandBytes.length);
+        System.arraycopy(crlf, 0, header, commandBytes.length, crlf.length);
+
+        //body
+        byte[] body = chunk.getBody();
+        System.out.println("Body size sender: " + body.length);
+
+        //final message
+        byte[] message = new byte[header.length + body.length];
+        System.arraycopy(header, 0, message, 0, header.length);
+        System.arraycopy(body, 0, message, header.length, body.length);
+
+        return message;
     }
 
 }

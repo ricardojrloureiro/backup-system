@@ -68,7 +68,7 @@ public class Partials {
         try {
             writer = new BufferedWriter(new FileWriter(currentDir + "/conf.csv",true));
 
-            //gets previous avaiable space
+            //gets previous available space
             int currentSpace = getCurrentSpace(currentDir);
             int difference = currentSpace-bytes.length;
 
@@ -386,5 +386,47 @@ public class Partials {
         input.close();
 
         return lineMax;
+    }
+
+
+    public static boolean checkRepDegree(String currentDir, String fileIdRemoved, String chunkNoRemoved)
+            throws IOException {
+        BufferedReader input = new BufferedReader(new FileReader(currentDir + "/conf.csv"));
+        String line, fullData="";
+        String lineToUpdate = null;
+        boolean value=true;
+        String expectedChunk = chunkNoRemoved.trim();
+
+        while((line=input.readLine()) != null) {
+            String[] separatedLine = line.split(",");
+            if(separatedLine != null) {
+                if(separatedLine[1].equals(fileIdRemoved)
+                        && expectedChunk.equals(separatedLine[2])) {
+                    String[] split = line.split(",");
+                    split[4] = String.valueOf(Integer.parseInt(split[4])-1);
+                    line = "";
+                    for(int i=0;i<split.length;i++) {
+                        line += split[i];
+                        if(i+1 < split.length) {
+                            line += ",";
+                        }
+                    }
+
+                    if(Integer.parseInt(split[3])<Integer.parseInt(split[4])) {
+                        value=true;
+                    }else {
+                        value=false;
+                    }
+
+                }
+                fullData += line + '\n';
+            }
+        }
+        input.close();
+        FileOutputStream fileOut = new FileOutputStream(currentDir + "/conf.csv");
+        fileOut.write(fullData.getBytes());
+        fileOut.close();
+
+        return value;
     }
 }

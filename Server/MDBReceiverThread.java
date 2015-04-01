@@ -13,9 +13,6 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Random;
 
-/**
- * Created by Tiago on 28-03-2015.
- */
 public class MDBReceiverThread extends Thread {
 
     private String currentDir;
@@ -26,13 +23,10 @@ public class MDBReceiverThread extends Thread {
     private int mdb_port;
     private int mdr_port;
 
-    private boolean state;
 
     private MulticastSocket mc_socket, mdb_socket, mcr_socket;
 
     public MDBReceiverThread(String mc, int mc_port, String mdb, int mdb_port, String mdr, int mdr_port, String dir) throws IOException {
-        state=true;
-
         this.mc_address = InetAddress.getByName(mc);
         this.mc_port = mc_port;
 
@@ -68,7 +62,7 @@ public class MDBReceiverThread extends Thread {
 
         byte[] buf = new byte[65000];
 
-        while(state) {
+        while(true) {
             DatagramPacket packet = new DatagramPacket(buf, buf.length);
             try {
                 mdb_socket.receive(packet);
@@ -110,15 +104,17 @@ public class MDBReceiverThread extends Thread {
                         System.out.println("Could not remove chunk");
                     }
                     sendRemovedMessage(removed);
-                    Partials.updateConfFile(currentDir,header_args,body);
-                    storeChunk(body, header_args, fileName);
+                    Partials.updateConfFile(currentDir, header_args, body);
 
+                    if(Partials.updateConfFile(currentDir,header_args,body)) {
+                        storeChunk(body, header_args, fileName);
+                        System.out.println("Stored successfully after requiring space");
+                    } else {
+                        System.out.println("Still not enough space");
+                    }
                 }
-
             }
-
         }
-
     }
 
     private void sendRemovedMessage(String[] removed) {
