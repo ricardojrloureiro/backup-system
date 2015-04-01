@@ -103,20 +103,48 @@ public class MDBReceiverThread extends Thread {
                 }
                 else { //remove one chunk to store the new one
                     System.out.println("HAS TO REMOVE");
+                    String[] removed = new String[0];
                     try {
-                        Partials.removeChunk(currentDir);
+                        removed = Partials.removeChunk(currentDir);
                     } catch (IOException e) {
                         System.out.println("Could not remove chunk");
                     }
+                    sendRemovedMessage(removed);
                     Partials.updateConfFile(currentDir,header_args,body);
                     storeChunk(body, header_args, fileName);
-                    //sendRemovedMessage()
+
                 }
 
             }
 
         }
 
+    }
+
+    private void sendRemovedMessage(String[] removed) {
+        System.out.println("SENDING REMOVED");
+        StringBuilder builder = new StringBuilder();
+
+        builder.append("REMOVED " + removed[0] + " " + removed[1] + " " + removed[2] + " ");
+
+        String command = builder.toString(); //join all the arguments of the command into a string
+        byte[] commandBytes = command.getBytes();
+
+        //build termination token
+        byte[] crlf = Partials.createCRLFToken();
+
+        //message
+        byte[] message = new byte[commandBytes.length + crlf.length];
+        System.arraycopy(commandBytes, 0, message, 0, commandBytes.length);
+        System.arraycopy(crlf, 0, message, commandBytes.length, crlf.length);
+
+        DatagramPacket packet = new DatagramPacket(message, message.length, mc_address, mc_port);
+        try {
+            mc_socket.send(packet);
+        } catch (IOException e) {
+            System.out.println("Could not send STORED message on MC socket");
+            e.printStackTrace();
+        }
     }
 
     private void storeChunk(byte[] body, String[] header_args, String fileName) {

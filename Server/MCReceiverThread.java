@@ -141,6 +141,9 @@ public class MCReceiverThread extends Thread {
                     e.printStackTrace();
                 }
             }
+            else if(header_args[0].equals("REMOVED")) {
+                System.out.println("GOT REMOVED");
+            }
 
         }
 

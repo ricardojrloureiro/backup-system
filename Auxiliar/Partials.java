@@ -292,7 +292,7 @@ public class Partials {
         }
     }
 
-    public static void removeChunk(String currentDir) throws IOException {
+    public static String[] removeChunk(String currentDir) throws IOException {
 
         int lineNo = getChunkWithHighDeg(currentDir);
         System.out.println("lineNo: " + lineNo);
@@ -300,6 +300,7 @@ public class Partials {
         BufferedReader input = new BufferedReader(new FileReader(currentDir + "/conf.csv"));
         String line, fullData="";
         int toAdd = 0, currentLine = 0, prevSpace = 0;
+        String[] lineToReturn = new String[6];
 
         while((line=input.readLine()) != null) {
 
@@ -310,7 +311,7 @@ public class Partials {
                 if (currentLine == lineNo) {
 
                     String[] split = line.split(",");
-
+                    System.arraycopy(split,0,lineToReturn,0,split.length);
                     toAdd += prevSpace - Integer.parseInt(split[5]);
                     prevSpace = Integer.parseInt(split[5]);
 
@@ -328,7 +329,6 @@ public class Partials {
                         System.out.println("total size: " + split[5]);
                         prevSpace = Integer.parseInt(split[5]);
                     }
-
 
                     line = "";
 
@@ -353,13 +353,15 @@ public class Partials {
         fileOut.write(fullData.getBytes());
         fileOut.close();
 
+
+        return lineToReturn;
     }
 
     private static int getChunkWithHighDeg(String currentDir) throws IOException {
 
         BufferedReader input = new BufferedReader(new FileReader(currentDir + "/conf.csv"));
         String line;
-        int maxDeg = 0;
+        int maxDeg = -9999;
         int lineNo = 0;
         int lineMax = 0;
 
@@ -370,7 +372,7 @@ public class Partials {
             if (separatedLine != null) {
 
                 if (!separatedLine[4].equals("RepDegAct") && !separatedLine[4].equals("")){//first two lines
-                    int deg = Integer.parseInt(separatedLine[4]);
+                    int deg = Integer.parseInt(separatedLine[4]) - Integer.parseInt(separatedLine[3]);
                     if(deg > maxDeg){
                         maxDeg = deg;
                         lineMax = lineNo;
