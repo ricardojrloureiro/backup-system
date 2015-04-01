@@ -2,6 +2,9 @@ package Auxiliar;
 
 import javax.annotation.processing.SupportedSourceVersion;
 import java.io.*;
+import java.net.DatagramPacket;
+import java.net.InetAddress;
+import java.net.MulticastSocket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -63,36 +66,59 @@ public class Partials {
         }
     }
 
-    public static boolean updateConfFile(String currentDir, String[] header_args, byte[] bytes) {
+    public static boolean updateConfFile(String currentDir, String[] header_args, byte[] bytes) throws IOException {
 
         trimArray(header_args);
+        currentDir = currentDir.trim();
 
         BufferedWriter writer;
 
+
         try {
-            writer = new BufferedWriter(new FileWriter(currentDir + "/conf.csv",true));
+            writer = new BufferedWriter(new FileWriter(currentDir + "/conf.csv", true));
 
             //gets previous available space
             int currentSpace = getCurrentSpace(currentDir);
-            int difference = currentSpace-bytes.length;
+            int difference = currentSpace - bytes.length;
 
             System.out.println("DIFFERENCE: " + difference);
 
-            if(difference>0){
+            if (difference > 0) {
                 //updates file
-                writer.write(header_args[1] + "," + header_args[2]+ "," + header_args[3]+ "," +
-                             header_args[4] + "," +      "0"      + "," + bytes.length + "," + String.valueOf(difference));
+                writer.write(header_args[1] + "," + header_args[2] + "," + header_args[3] + "," +
+                        header_args[4] + "," + "0" + "," + bytes.length + "," + String.valueOf(difference));
                 writer.newLine();
                 writer.close();
                 return true;
-            }
-            else {
+            } else {
                 writer.close();
             }
 
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+
+        return false;
+    }
+
+    public static boolean chunkExistsInFile(String currentDir, String[] header_args) throws IOException {
+        currentDir = currentDir.trim();
+
+        BufferedReader input = new BufferedReader(new FileReader(currentDir + "/conf.csv"));
+        String line;
+
+        while((line=input.readLine()) != null) {
+            String[] separatedLine = line.split(",");
+            if(separatedLine != null) {
+                if(separatedLine[1].equals(header_args[2]) && separatedLine[2].equals(header_args[3])) {
+                    input.close();
+                    return true;
+                }
+            }
+        }
+        input.close();
+
         return false;
     }
 
@@ -301,15 +327,18 @@ public class Partials {
         }
     }
 
-    public static String[] removeChunk(String currentDir) throws IOException {
+    public static int removeChunk(String currentDir, MulticastSocket mc_socket, InetAddress mc_address, int mc_port) throws IOException {
+
+        currentDir = currentDir.trim();
 
         int lineNo = getChunkWithHighDeg(currentDir);
         System.out.println("lineNo: " + lineNo);
 
         BufferedReader input = new BufferedReader(new FileReader(currentDir + "/conf.csv"));
         String line, fullData="";
-        int toAdd = 0, currentLine = 0, prevSpace = 0;
-        String[] lineToReturn = new String[6];
+        int toAdd = 0, currentLine = 0;
+        String[] lineToReturn = new String[7];
+        int chunkSize = 0;
 
         while((line=input.readLine()) != null) {
 
@@ -321,11 +350,11 @@ public class Partials {
 
                     String[] split = line.split(",");
                     System.arraycopy(split,0,lineToReturn,0,split.length);
-                    toAdd += prevSpace - Integer.parseInt(split[5]);
-                    prevSpace = Integer.parseInt(split[5]);
-
+                    toAdd += Integer.parseInt(split[5]);
+                    chunkSize = toAdd;
                     System.out.println("Delete.");
                     deleteChunk(split[2].trim(), split[1].trim(), currentDir.trim());
+                    sendRemovedMessage(split, mc_socket, mc_address, mc_port);
 
                     line = "";
 
@@ -333,10 +362,8 @@ public class Partials {
 
                     String[] split = line.split(",");
 
-                    if (!split[5].equals("currentSpace") && !split[5].equals("")){//first two lines
-                        split[5] = String.valueOf(Integer.parseInt(split[5]) + toAdd);
-                        System.out.println("total size: " + split[5]);
-                        prevSpace = Integer.parseInt(split[5]);
+                    if (!split[6].equals("currentSpace") && !split[6].equals("")){//first two lines
+                        split[6] = String.valueOf(Integer.parseInt(split[6]) + toAdd);
                     }
 
                     line = "";
@@ -363,15 +390,17 @@ public class Partials {
         fileOut.close();
 
 
-        return lineToReturn;
+        return chunkSize;
     }
 
     private static int getChunkWithHighDeg(String currentDir) throws IOException {
 
+        currentDir = currentDir.trim();
+
         BufferedReader input = new BufferedReader(new FileReader(currentDir + "/conf.csv"));
         String line;
         int maxDeg = -9999;
-        int lineNo = 0;
+        int lineNo = 2;
         int lineMax = 0;
 
         while((line=input.readLine()) != null) {
@@ -387,9 +416,7 @@ public class Partials {
                         lineMax = lineNo;
                     }
                 }
-
             }
-
             lineNo++;
         }
         input.close();
@@ -397,19 +424,22 @@ public class Partials {
         return lineMax;
     }
 
-    public static boolean checkRepDegree(String currentDir, String fileIdRemoved, String chunkNoRemoved)
-            throws IOException {
+    public static boolean checkRepDegree(String currentDir, String fileIdRemoved, String chunkNoRemoved) throws IOException {
+
+        currentDir = currentDir.trim();
+        fileIdRemoved = fileIdRemoved.trim();
+        chunkNoRemoved = chunkNoRemoved.trim();
+
         BufferedReader input = new BufferedReader(new FileReader(currentDir + "/conf.csv"));
         String line, fullData="";
-        String lineToUpdate = null;
-        boolean value=false;
+        boolean value = false;
         String expectedChunk = chunkNoRemoved.trim();
 
         while((line=input.readLine()) != null) {
             String[] separatedLine = line.split(",");
             if(separatedLine != null) {
-                if(separatedLine[1].equals(fileIdRemoved)
-                        && expectedChunk.equals(separatedLine[2])) {
+                if(separatedLine[1].equals(fileIdRemoved) && expectedChunk.equals(separatedLine[2])) {
+
                     String[] split = line.split(",");
                     split[4] = String.valueOf(Integer.parseInt(split[4])-1);
                     line = "";
@@ -437,4 +467,32 @@ public class Partials {
 
         return value;
     }
+
+    private static void sendRemovedMessage(String[] removed, MulticastSocket mc_socket, InetAddress mc_address, int mc_port) {
+        System.out.println("SENDING REMOVED");
+        StringBuilder builder = new StringBuilder();
+
+        builder.append("REMOVED " + removed[0] + " " + removed[1] + " " + removed[2] + " ");
+
+        String command = builder.toString(); //join all the arguments of the command into a string
+        byte[] commandBytes = command.getBytes();
+
+        //build termination token
+        byte[] crlf = Partials.createCRLFToken();
+
+        //message
+        byte[] message = new byte[commandBytes.length + crlf.length];
+        System.arraycopy(commandBytes, 0, message, 0, commandBytes.length);
+        System.arraycopy(crlf, 0, message, commandBytes.length, crlf.length);
+
+        DatagramPacket packet = new DatagramPacket(message, message.length, mc_address, mc_port);
+        try {
+            mc_socket.send(packet);
+            System.out.println("Sent REMOVED");
+        } catch (IOException e) {
+            System.out.println("Could not send REMOVED message on MC socket");
+            e.printStackTrace();
+        }
+    }
+
 }

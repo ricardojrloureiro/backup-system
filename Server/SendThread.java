@@ -110,6 +110,18 @@ public class SendThread extends Thread {
                     }
                     break;
                 }
+                case "RECLAIM": {
+                    System.out.println("Space reclaim command prompted");
+
+                    if(message_args.length != 2) {
+                        System.out.println("Usage: DELETE <SPACE>");
+                    }
+                    else {
+                        //notify other peers that file was deleted
+                        reclaimSpace(Integer.parseInt(message_args[1].trim()));
+                    }
+                    break;
+                }
                 default: {
                     System.out.println("Invalid command, please try again");
                     break;
@@ -120,6 +132,18 @@ public class SendThread extends Thread {
             e.printStackTrace();
         } catch (InterruptedException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void reclaimSpace(int space) throws IOException {
+        int spaceReclaimed = 0;
+
+        while (spaceReclaimed < space) {
+            int removed = Partials.removeChunk(currentDir,mc_socket,mc_address,mc_port);
+
+            if(removed == 0)
+                break;
+            else spaceReclaimed += removed;
         }
     }
 

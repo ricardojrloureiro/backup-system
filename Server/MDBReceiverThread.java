@@ -90,56 +90,41 @@ public class MDBReceiverThread extends Thread {
 
             if (header_args[0].equals("PUTCHUNK")) {
                 String fileName = header_args[2];
+                try {
+                    if(!Partials.chunkExistsInFile(currentDir,header_args)) {
+                        System.out.println("Chunk does not exist");
+                        //save file in storage if there is enough available space
+                        if (Partials.updateConfFile(currentDir, header_args, body)) {
+                            storeChunk(body, header_args, fileName);
+                        }
+                        /*
+                        else { //remove one chunk to store the new one
+                            String[] removed = new String[0];
+                            try {
+                                removed = Partials.removeChunk(currentDir, body);
+                            } catch (IOException e) {
+                                System.out.println("Could not remove chunk");
+                            }
+                            sendRemovedMessage(removed);
 
-                //save file in storage if there is enough available space
-                if(Partials.updateConfFile(currentDir, header_args, body)) {
-                    storeChunk(body, header_args, fileName);
-                }
-                else { //remove one chunk to store the new one
-                    System.out.println("HAS TO REMOVE");
-                    String[] removed = new String[0];
-                    try {
-                        removed = Partials.removeChunk(currentDir);
-                    } catch (IOException e) {
-                        System.out.println("Could not remove chunk");
-                    }
-                    sendRemovedMessage(removed);
-                    Partials.updateConfFile(currentDir, header_args, body);
+                            Partials.updateConfFile(currentDir, header_args, body);
+                            storeChunk(body, header_args, fileName);
 
-                    if(Partials.updateConfFile(currentDir,header_args,body)) {
-                        storeChunk(body, header_args, fileName);
-                        System.out.println("Stored successfully after requiring space");
-                    } else {
-                        System.out.println("Still not enough space");
+                        if(Partials.updateConfFile(currentDir,header_args,body)) {
+                            storeChunk(body, header_args, fileName);
+                            System.out.println("Stored successfully after requiring space");
+                        } else {
+                            System.out.println("Still not enough space");
+                        }
+
+                        }
+                        */
+
                     }
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             }
-        }
-    }
-
-    private void sendRemovedMessage(String[] removed) {
-        System.out.println("SENDING REMOVED");
-        StringBuilder builder = new StringBuilder();
-
-        builder.append("REMOVED " + removed[0] + " " + removed[1] + " " + removed[2] + " ");
-
-        String command = builder.toString(); //join all the arguments of the command into a string
-        byte[] commandBytes = command.getBytes();
-
-        //build termination token
-        byte[] crlf = Partials.createCRLFToken();
-
-        //message
-        byte[] message = new byte[commandBytes.length + crlf.length];
-        System.arraycopy(commandBytes, 0, message, 0, commandBytes.length);
-        System.arraycopy(crlf, 0, message, commandBytes.length, crlf.length);
-
-        DatagramPacket packet = new DatagramPacket(message, message.length, mc_address, mc_port);
-        try {
-            mc_socket.send(packet);
-        } catch (IOException e) {
-            System.out.println("Could not send STORED message on MC socket");
-            e.printStackTrace();
         }
     }
 

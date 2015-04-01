@@ -210,7 +210,7 @@ public class MCReceiverThread extends Thread {
     }
 
     private byte[] createPutchunkMessage(String fileId, String chunkNo,Chunk chunk ){
-        String command = "PUTCHUNK " + fileId + " " + chunkNo + " " +
+        String command = "PUTCHUNK " + "1.0 " + fileId + " " + chunkNo + " " +
                 chunk.getChunkNumber() + " ";
         byte[] commandBytes = command.getBytes();
 
