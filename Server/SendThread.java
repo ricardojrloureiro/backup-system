@@ -287,14 +287,15 @@ public class SendThread extends Thread {
                 DatagramPacket packet = new DatagramPacket(buf, buf.length);
                 try {
                     mc_socket.setSoTimeout(timeout);
-                    mc_socket.receive(packet);
+                    while(true) {
+                        mc_socket.receive(packet);
+                        if(compareMessage(message_args, buf,String.valueOf(i))){
+                            numberOfStores++;
+                        }
 
-                    if(compareMessage(message_args, buf,String.valueOf(i))){
-                        numberOfStores++;
-                    }
-
-                    if(numberOfStores >= Integer.parseInt(message_args[3])) {
-                        finished=true;
+                        if(numberOfStores >= Integer.parseInt(message_args[3])) {
+                            finished=true;
+                        }
                     }
 
                 } catch (SocketTimeoutException e) {
