@@ -276,6 +276,7 @@ public class SendThread extends Thread {
             int timeout = 500;
             int attempts = 5;
             boolean finished = false;
+            boolean innerCircle=true;
 
             //sends message
 
@@ -287,7 +288,7 @@ public class SendThread extends Thread {
                 DatagramPacket packet = new DatagramPacket(buf, buf.length);
                 try {
 
-                    while(true) {
+                    while(innerCircle) {
                         mc_socket.setSoTimeout(timeout);
                         mc_socket.receive(packet);
                         if(compareMessage(message_args, buf,String.valueOf(i))){
@@ -296,7 +297,7 @@ public class SendThread extends Thread {
 
                         if(numberOfStores >= Integer.parseInt(message_args[3])) {
                             finished=true;
-                            break;
+                            innerCircle=false;
                         }
                         System.out.println(numberOfStores);
                     }
