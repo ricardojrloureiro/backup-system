@@ -286,8 +286,9 @@ public class SendThread extends Thread {
             while(attempts > 0 && !finished) {
                 DatagramPacket packet = new DatagramPacket(buf, buf.length);
                 try {
-                    mc_socket.setSoTimeout(timeout);
+
                     while(true) {
+                        mc_socket.setSoTimeout(timeout);
                         mc_socket.receive(packet);
                         if(compareMessage(message_args, buf,String.valueOf(i))){
                             numberOfStores++;
