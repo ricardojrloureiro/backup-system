@@ -296,7 +296,9 @@ public class SendThread extends Thread {
 
                         if(numberOfStores >= Integer.parseInt(message_args[3])) {
                             finished=true;
+                            break;
                         }
+                        System.out.println(numberOfStores);
                     }
 
                 } catch (SocketTimeoutException e) {
