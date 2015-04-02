@@ -141,11 +141,14 @@ public class Partials {
                 last = line;
             }
 
-            String[] separatedLine = last.split(",");
+            if(last!=null) {
+                String[] separatedLine = last.split(",");
 
-            input.close();
+                input.close();
 
-            return Integer.parseInt(separatedLine[separatedLine.length-1]);
+                return Integer.parseInt(separatedLine[separatedLine.length-1]);
+            }
+
 
         } catch (FileNotFoundException e) {
             e.printStackTrace();

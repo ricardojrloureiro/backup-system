@@ -106,11 +106,19 @@ public class MCReceiverThread extends Thread {
 
                     try {
                         mdr_socket.setSoTimeout(random);
-                        mdr_socket.receive(rpacket);
-                        Chunk toSend = null;
+                        String chunkNumberPretended = header_args[3].trim();
+                        String fileIdPretended = header_args[2].trim();
+                        boolean notReceiving=true;
+                        while(notReceiving) {
+                            mdr_socket.receive(rpacket);
+                            String header_received = (String) Partials.parseMessage(rpacket.getData(),rpacket.getLength()).get(0);
+                            String[] split = header_received.split(" ");
+                            if(split[2].equals(fileIdPretended) &&
+                                    split[3].equals(chunkNumberPretended)) {
 
-                        toSend = Partials.getChunkFromFile(header_args[1], header_args[2], header_args[3].trim(), currentDir);
-                        sendChunk(toSend, header_args);
+                                notReceiving=false;
+                            }
+                        }
                     } catch (SocketTimeoutException e) {
                         Chunk toSend = null;
                         try {
