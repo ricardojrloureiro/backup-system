@@ -72,8 +72,8 @@ public class MDBReceiverThread extends Thread {
             }
 
 
-            String header = null;
-            byte[] body = null;
+            String header;
+            byte[] body;
 
             ArrayList<Object> splitMessage = Partials.parseMessage(packet.getData(), packet.getLength());
 

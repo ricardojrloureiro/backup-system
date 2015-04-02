@@ -20,6 +20,7 @@ public class Peer {
         }
 
         Partials.createPeerDirectory(args[6],args[7]);
+        Partials.createPeerStoredFile(args[6]);
 
         new SendThread(args[0],Integer.parseInt(args[1]),
                 args[2],Integer.parseInt(args[3]),

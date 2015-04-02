@@ -106,6 +106,7 @@ public class Partials {
 
     public static boolean chunkExistsInFile(String currentDir, String[] header_args) throws IOException {
         currentDir = currentDir.trim();
+        trimArray(header_args);
 
         BufferedReader input = new BufferedReader(new FileReader(currentDir + "/conf.csv"));
         String line;
@@ -191,7 +192,7 @@ public class Partials {
     }
 
     public static ArrayList<Object> parseMessage(byte[] data, int length) {
-        ArrayList<byte[]> header_body = splitMessageData(data,length);
+        ArrayList<byte[]> header_body = splitMessageData(data, length);
 
         byte[] header_data = header_body.get(0);
         byte[] body_data = header_body.get(1);
@@ -497,4 +498,59 @@ public class Partials {
         }
     }
 
+    public static void createPeerStoredFile(String name) {
+        File stored = new File( "Peers/" + name + "/stores.csv");
+
+        PrintWriter out = null;
+
+        try {
+            out = new PrintWriter(stored);
+            out.println("IP,ChunkNo,FileId");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        finally {
+            out.close();
+        }
+    }
+
+    public static boolean gotStored(String address, String[] header_args, String currentDir) throws IOException {
+        currentDir = currentDir.trim();
+        trimArray(header_args);
+
+        BufferedReader input = new BufferedReader(new FileReader(currentDir + "/stores.csv"));
+        String line;
+
+        while((line=input.readLine()) != null) {
+            String[] separatedLine = line.split(",");
+            if(separatedLine != null) {
+                if(separatedLine[0].equals(address) && separatedLine[1].equals(header_args[3]) && separatedLine[2].equals(header_args[2])) {
+                    input.close();
+                    return true;
+                }
+            }
+        }
+        input.close();
+
+        return false;
+    }
+
+    public static void addToStoredFile(String address, String[] header_args, String currentDir) {
+        trimArray(header_args);
+        currentDir = currentDir.trim();
+
+        BufferedWriter writer;
+
+        try {
+            writer = new BufferedWriter(new FileWriter(currentDir + "/stores.csv", true));
+
+            writer.write(address + "," + header_args[3] + "," + header_args[2]);
+            writer.newLine();
+            writer.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
 }

@@ -5,7 +5,6 @@ import Auxiliar.Partials;
 
 import java.io.IOException;
 import java.net.*;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -20,7 +19,6 @@ public class MCReceiverThread extends Thread {
     private int mdr_port;
 
     private boolean state;
-    private boolean sendChunk;
 
     private MulticastSocket mc_socket, mdb_socket, mdr_socket;
 
@@ -50,11 +48,6 @@ public class MCReceiverThread extends Thread {
         this.mdr_socket.setTimeToLive(1);
 
         this.currentDir = dir;
-        this.sendChunk = true;
-    }
-
-    public void setSendChunk(boolean sendChunk) {
-        this.sendChunk = sendChunk;
     }
 
     public void run() {
@@ -93,8 +86,11 @@ public class MCReceiverThread extends Thread {
 
             if (header_args[0].equals("STORED")) {
                 try {
-                    System.out.println("Incrementing value stored");
-                    Partials.changeRepDegree(currentDir, header_args[2], header_args[3]);
+                    if(!Partials.gotStored(packet.getAddress().getHostAddress(),header_args,currentDir)){
+                        System.out.println("Incrementing value stored");
+                        Partials.changeRepDegree(currentDir, header_args[2], header_args[3]);
+                        Partials.addToStoredFile(packet.getAddress().getHostAddress(),header_args,currentDir);
+                    }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
