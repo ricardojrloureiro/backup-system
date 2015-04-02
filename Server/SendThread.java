@@ -311,6 +311,7 @@ public class SendThread extends Thread {
                 numberOfStores=0;
             }
         }
+        System.out.println("End of backup");
 
 
     }
