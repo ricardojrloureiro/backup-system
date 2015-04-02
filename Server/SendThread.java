@@ -311,7 +311,6 @@ public class SendThread extends Thread {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                numberOfStores=0;
             }
         }
         System.out.println("End of backup");
