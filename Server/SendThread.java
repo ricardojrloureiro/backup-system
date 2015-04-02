@@ -76,37 +76,57 @@ public class SendThread extends Thread {
                 case "BACKUP": {
                     System.out.println("Backup command prompted");
 
-                    if(message_args.length != 4) {
-                        System.out.println("Usage: BACKUP <FILE> <VERSION> <REPLICATION DEGREE>");
+                    if(message_args.length != 3) {
+                        System.out.println("Usage: BACKUP <FILE> <REPLICATION DEGREE>");
                     }
                     else {
                         //send file in chunks to other peers
-                        sendFileChunks(message_args);
+                        String newMessage = message + " " + Partials.version;
+                        String[] split = newMessage.split(" ");
+
+                        String tempVersion = new String();
+                        tempVersion = split[2];
+
+                        String tempRep = new String();
+                        tempRep = split[3];
+
+                        split[3] = tempVersion;
+                        split[2] = tempRep;
+
+                        sendFileChunks(split);
                     }
                     break;
                 }
                 case "RESTORE": {
                     System.out.println("Restore command prompted");
 
-                    if(message_args.length != 3) {
-                        System.out.println("Usage: RESTORE <FILE> <VERSION>");
+                    if(message_args.length != 2) {
+                        System.out.println("Usage: RESTORE <FILE>");
                     }
                     else {
+                        String newMessage = message + " " + Partials.version;
+                        String[] split = newMessage.split(" ");
 
                         //retrieve chunk from other peers
-                        retrieveChunks(message_args);
+                        retrieveChunks(split);
 
                     }
+                    break;
                 }
                 case "DELETE": {
                     System.out.println("Delete command prompted");
 
-                    if(message_args.length != 3) {
-                        System.out.println("Usage: DELETE <FILE> <VERSION>");
+                    if(message_args.length != 2) {
+                        System.out.println("Usage: DELETE <FILE>");
                     }
                     else {
                         //notify other peers that file was deleted
-                        notifyFileDeletion(message_args);
+                        String newMessage = message + " " + Partials.version;
+                        String[] split = newMessage.split(" ");
+
+                        System.out.println(split[0]+ " " + split[1] + " " + split[2]);
+
+                        notifyFileDeletion(split);
                     }
                     break;
                 }
@@ -286,7 +306,7 @@ public class SendThread extends Thread {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-
+                numberOfStores=0;
             }
         }
 

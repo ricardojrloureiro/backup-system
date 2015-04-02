@@ -14,6 +14,8 @@ import java.util.Objects;
 
 public class Partials {
 
+    public static String version = "1.0";
+
     public static byte[] createCRLFToken() {
         byte[] crlf = new byte[4];
         crlf[0] = 0xD;

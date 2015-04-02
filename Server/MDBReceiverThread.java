@@ -97,29 +97,8 @@ public class MDBReceiverThread extends Thread {
                         if (Partials.updateConfFile(currentDir, header_args, body)) {
                             storeChunk(body, header_args, fileName);
                         }
-                        /*
-                        else { //remove one chunk to store the new one
-                            String[] removed = new String[0];
-                            try {
-                                removed = Partials.removeChunk(currentDir, body);
-                            } catch (IOException e) {
-                                System.out.println("Could not remove chunk");
-                            }
-                            sendRemovedMessage(removed);
-
-                            Partials.updateConfFile(currentDir, header_args, body);
-                            storeChunk(body, header_args, fileName);
-
-                        if(Partials.updateConfFile(currentDir,header_args,body)) {
-                            storeChunk(body, header_args, fileName);
-                            System.out.println("Stored successfully after requiring space");
-                        } else {
-                            System.out.println("Still not enough space");
-                        }
-
-                        }
-                        */
-
+                    } else {
+                        sendStoredMessage(header_args);
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
