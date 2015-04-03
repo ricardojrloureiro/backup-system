@@ -338,65 +338,67 @@ public class Partials {
     public static int removeChunk(String currentDir, MulticastSocket mc_socket, InetAddress mc_address, int mc_port) throws IOException {
 
         currentDir = currentDir.trim();
+        int chunkSize = 64000;
 
         int lineNo = getChunkWithHighDeg(currentDir);
-        System.out.println("lineNo: " + lineNo);
+        if(lineNo != -1) {
+            System.out.println("lineNo: " + lineNo);
 
-        BufferedReader input = new BufferedReader(new FileReader(currentDir + "/conf.csv"));
-        String line, fullData="";
-        int toAdd = 0, currentLine = 0;
-        String[] lineToReturn = new String[7];
-        int chunkSize = 0;
+            BufferedReader input = new BufferedReader(new FileReader(currentDir + "/conf.csv"));
+            String line, fullData = "";
+            int toAdd = 0, currentLine = 0;
+            String[] lineToReturn = new String[7];
 
-        while((line=input.readLine()) != null) {
 
-            String[] separatedLine = line.split(",");
+            while ((line = input.readLine()) != null) {
 
-            if (separatedLine != null) {
+                String[] separatedLine = line.split(",");
 
-                if (currentLine == lineNo) {
+                if (separatedLine != null) {
 
-                    String[] split = line.split(",");
-                    System.arraycopy(split,0,lineToReturn,0,split.length);
-                    toAdd += Integer.parseInt(split[5]);
-                    chunkSize = toAdd;
-                    System.out.println("Delete.");
-                    deleteChunk(split[2].trim(), split[1].trim(), currentDir.trim());
-                    sendRemovedMessage(split, mc_socket, mc_address, mc_port);
+                    if (currentLine == lineNo) {
 
-                    line = "";
+                        String[] split = line.split(",");
+                        System.arraycopy(split, 0, lineToReturn, 0, split.length);
+                        toAdd += Integer.parseInt(split[5]);
+                        chunkSize = toAdd;
+                        System.out.println("Delete.");
+                        deleteChunk(split[2].trim(), split[1].trim(), currentDir.trim());
+                        sendRemovedMessage(split, mc_socket, mc_address, mc_port);
 
-                } else {
+                        line = "";
 
-                    String[] split = line.split(",");
+                    } else {
 
-                    if (!split[6].equals("currentSpace") && !split[6].equals("")){//first two lines
-                        split[6] = String.valueOf(Integer.parseInt(split[6]) + toAdd);
-                    }
+                        String[] split = line.split(",");
 
-                    line = "";
-
-                    for (int i = 0; i < split.length; i++) {
-                        line += split[i];
-                        if (i + 1 < split.length) {
-                            line += ",";
+                        if (!split[6].equals("currentSpace") && !split[6].equals("")) {//first two lines
+                            split[6] = String.valueOf(Integer.parseInt(split[6]) + toAdd);
                         }
+
+                        line = "";
+
+                        for (int i = 0; i < split.length; i++) {
+                            line += split[i];
+                            if (i + 1 < split.length) {
+                                line += ",";
+                            }
+                        }
+
                     }
+
+                    if (!line.equals(""))
+                        fullData += line + '\n';
 
                 }
-
-                if (!line.equals(""))
-                    fullData += line + '\n';
-
+                currentLine++;
             }
-            currentLine++;
+            input.close();
+
+            FileOutputStream fileOut = new FileOutputStream(currentDir + "/conf.csv");
+            fileOut.write(fullData.getBytes());
+            fileOut.close();
         }
-        input.close();
-
-        FileOutputStream fileOut = new FileOutputStream(currentDir + "/conf.csv");
-        fileOut.write(fullData.getBytes());
-        fileOut.close();
-
 
         return chunkSize;
     }
@@ -408,8 +410,8 @@ public class Partials {
         BufferedReader input = new BufferedReader(new FileReader(currentDir + "/conf.csv"));
         String line;
         int maxDeg = -9999;
-        int lineNo = 2;
-        int lineMax = 0;
+        int lineNo = 0;
+        int lineMax = 2;
 
         while((line=input.readLine()) != null) {
 
@@ -428,6 +430,9 @@ public class Partials {
             lineNo++;
         }
         input.close();
+
+        if(lineNo < 2)
+            return -1;
 
         return lineMax;
     }
