@@ -220,6 +220,7 @@ public class SendThread extends Thread {
                 byte[] receive_buf = new byte[65000];
 
                 DatagramPacket receive_packet = new DatagramPacket(receive_buf, receive_buf.length);
+
                 mdr_socket.receive(receive_packet);
 
                 ArrayList<Object> separated = Partials.parseMessage(receive_packet.getData(), receive_packet.getLength());
@@ -239,6 +240,7 @@ public class SendThread extends Thread {
                         chunkNo++;
                         reached=true;
                     }
+
             }
         }
         System.out.println("Reached the end of the file");

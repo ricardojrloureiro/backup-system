@@ -111,7 +111,8 @@ public class MCReceiverThread extends Thread {
                         boolean notReceiving=true;
                         while(notReceiving) {
                             mdr_socket.receive(rpacket);
-                            String header_received = (String) Partials.parseMessage(rpacket.getData(),rpacket.getLength()).get(0);
+                            String header_received = (String) Partials.parseMessage(rpacket.getData(),
+                                    rpacket.getLength()).get(0);
                             String[] split = header_received.split(" ");
                             if(split[2].equals(fileIdPretended) &&
                                     split[3].equals(chunkNumberPretended)) {
@@ -122,6 +123,7 @@ public class MCReceiverThread extends Thread {
                     } catch (SocketTimeoutException e) {
                         Chunk toSend = null;
                         try {
+                            System.out.println("send chunk after tiemout with the id of " + header_args[3].trim());
                             toSend = Partials.getChunkFromFile(header_args[1], header_args[2], header_args[3].trim(), currentDir);
                             sendChunk(toSend, header_args);
                         } catch (IOException e1) {
