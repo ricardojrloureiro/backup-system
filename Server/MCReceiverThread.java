@@ -64,7 +64,9 @@ public class MCReceiverThread extends Thread {
         while(state) {
             DatagramPacket packet = new DatagramPacket(buf, buf.length);
             try {
+                System.out.println("entering mc socket receive");
                 mc_socket.receive(packet);
+                System.out.println("out of mc socket receive");
             } catch (IOException e) {
                 System.out.println("Could not receive from mdb socket");
                 e.printStackTrace();
@@ -103,7 +105,6 @@ public class MCReceiverThread extends Thread {
                     int random = new Random().nextInt(401);
                     byte[] rbuf = new byte[65000];
                     DatagramPacket rpacket = new DatagramPacket(rbuf, rbuf.length);
-
                     try {
                         mdr_socket.setSoTimeout(random);
                         String chunkNumberPretended = header_args[3].trim();
@@ -116,7 +117,7 @@ public class MCReceiverThread extends Thread {
                             String[] split = header_received.split(" ");
                             if(split[2].equals(fileIdPretended) &&
                                     split[3].equals(chunkNumberPretended)) {
-
+                                System.out.println("Already sent a chunk");
                                 notReceiving=false;
                             }
                         }
@@ -135,7 +136,6 @@ public class MCReceiverThread extends Thread {
                         e.printStackTrace();
                     }
                 }
-
             }
             else if(header_args[0].equals("DELETE")) {
                 //delete all chunks from that file

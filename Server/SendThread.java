@@ -207,7 +207,7 @@ public class SendThread extends Thread {
         boolean eof=false;
 
         while (!eof) {
-
+            System.out.println("Entered receiving chunks");
             byte[] buf;
             buf = createRestoreMessage(message_args, String.valueOf(chunkNo));
 
@@ -217,11 +217,13 @@ public class SendThread extends Thread {
             boolean reached=false;
 
             while(!reached) {
+                System.out.println("Entered inner cicle");
                 byte[] receive_buf = new byte[65000];
 
                 DatagramPacket receive_packet = new DatagramPacket(receive_buf, receive_buf.length);
-
+                System.out.println("Entered mdr_socket receive");
                 mdr_socket.receive(receive_packet);
+                System.out.println("Left mdr_socket receive");
 
                 ArrayList<Object> separated = Partials.parseMessage(receive_packet.getData(), receive_packet.getLength());
 
@@ -240,8 +242,9 @@ public class SendThread extends Thread {
                         chunkNo++;
                         reached=true;
                     }
-
+                 System.out.println("waiting chunk with the id of# "+ chunkNo + "received #" + header_parts[3]);
             }
+            System.out.println("hello");
         }
         System.out.println("Reached the end of the file");
     }

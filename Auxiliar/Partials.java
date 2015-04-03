@@ -235,9 +235,11 @@ public class Partials {
         System.out.println("File Path: " + filePath);
         File f = new File(filePath);
         if(f.exists() && !f.isDirectory()) {
+            System.out.println("Chunk exists true");
             return true;
-        }
 
+        }
+        System.out.println("Chunk exists false");
         return false;
     }
 

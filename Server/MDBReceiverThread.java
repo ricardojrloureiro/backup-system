@@ -91,14 +91,18 @@ public class MDBReceiverThread extends Thread {
             if (header_args[0].equals("PUTCHUNK")) {
                 String fileName = header_args[2];
                 try {
-                    if(!Partials.chunkExistsInFile(currentDir,header_args)) {
-                        System.out.println("Chunk does not exist");
-                        //save file in storage if there is enough available space
-                        if (Partials.updateConfFile(currentDir, header_args, body)) {
-                            storeChunk(body, header_args, fileName);
+                    InetAddress localHost = InetAddress.getLocalHost();
+                    InetAddress receivingHost = packet.getAddress();
+                    if(!receivingHost.equals(localHost)){
+                        if(!Partials.chunkExistsInFile(currentDir,header_args)) {
+                            System.out.println("Chunk does not exist");
+                            //save file in storage if there is enough available space
+                            if (Partials.updateConfFile(currentDir, header_args, body)) {
+                                storeChunk(body, header_args, fileName);
+                            }
+                        } else {
+                            sendStoredMessage(header_args);
                         }
-                    } else {
-                        sendStoredMessage(header_args);
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
