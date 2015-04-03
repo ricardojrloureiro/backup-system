@@ -94,13 +94,21 @@ public class MDBReceiverThread extends Thread {
                     InetAddress localHost = InetAddress.getLocalHost();
                     InetAddress receivingHost = packet.getAddress();
                     if(!receivingHost.equals(localHost)){
-                        if(!Partials.chunkExistsInFile(currentDir,header_args)) {
+                        if(!Partials.chunkExistsInFile(currentDir, header_args)) {
                             System.out.println("Chunk does not exist");
                             //save file in storage if there is enough available space
                             if (Partials.updateConfFile(currentDir, header_args, body)) {
                                 storeChunk(body, header_args, fileName);
                             }
                         } else {
+                            Random r = new Random();
+                            int delay = r.nextInt(401);
+                            try {
+                                sleep(delay);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                            System.out.println("Sending STORE");
                             sendStoredMessage(header_args);
                         }
                      }

@@ -312,11 +312,12 @@ public class SendThread extends Thread {
                     attempts--;
                     sendChunk(currentChunk,message_args);
                     System.out.println("Sent PUTCHUNK");
+                    numberOfStores=0;
 
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-                numberOfStores=0;
+
             }
         }
         System.out.println("End of backup");
