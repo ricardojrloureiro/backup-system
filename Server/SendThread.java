@@ -286,7 +286,7 @@ public class SendThread extends Thread {
             //sends message
 
             Chunk currentChunk = chunks.get(i);
-            sendChunk(currentChunk,message_args);
+            sendChunk(currentChunk, message_args);
             System.out.println("Sent PUTCHUNK");
 
             while(attempts > 0 && !finished) {
@@ -316,6 +316,7 @@ public class SendThread extends Thread {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+                numberOfStores=0;
             }
         }
         System.out.println("End of backup");

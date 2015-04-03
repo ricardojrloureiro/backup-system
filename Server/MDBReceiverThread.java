@@ -103,7 +103,7 @@ public class MDBReceiverThread extends Thread {
                         } else {
                             sendStoredMessage(header_args);
                         }
-                    }
+                     }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
