@@ -94,8 +94,8 @@ public class MDBReceiverThread extends Thread {
                 try {
                     InetAddress localHost = InetAddress.getLocalHost();
                     InetAddress receivingHost = packet.getAddress();
-                    if(!receivingHost.equals(localHost)){
-                        if(!Partials.chunkExistsInFile(currentDir, header_args)) {
+                    if(!receivingHost.equals(localHost)) {
+                        if (!Partials.chunkExistsInFile(currentDir, header_args)) {
                             System.out.println("Chunk not yet stored on this file system");
                             //save file in storage if there is enough available space
                             if (Partials.updateConfFile(currentDir, header_args, body)) {
@@ -112,7 +112,7 @@ public class MDBReceiverThread extends Thread {
                             System.out.println("Sending STORED");
                             sendStoredMessage(header_args);
                         }
-                     }
+                    }
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

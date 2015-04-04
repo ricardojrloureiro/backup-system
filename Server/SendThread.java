@@ -131,8 +131,6 @@ public class SendThread extends Thread {
                             String newMessage = message + " " + Partials.version;
                             String[] split = newMessage.split(" ");
 
-                            System.out.println(split[0] + " " + split[1] + " " + split[2]);
-
                             notifyFileDeletion(split);
                         }
                         break;
@@ -312,7 +310,6 @@ public class SendThread extends Thread {
                             finished=true;
                             innerCircle=false;
                         }
-                        System.out.println(numberOfStores);
                     }
 
                 } catch (SocketTimeoutException e) {
