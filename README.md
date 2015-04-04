@@ -21,5 +21,5 @@ Para testar o protocolo desenvolvido pode ser usado podem ser usados 4 comandos:
 - DELETE _Ficheiro_
   - Nome do ficheiro a apagar.
   
-- RECLAIM _Space_
-  - Space in bytes required to delete.
+- RECLAIM _ESPAÇO_
+  - Espaço em bytes necessários para o sistema.
