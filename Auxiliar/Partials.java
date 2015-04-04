@@ -83,8 +83,6 @@ public class Partials {
             int currentSpace = getCurrentSpace(currentDir);
             int difference = currentSpace - bytes.length;
 
-            System.out.println("DIFFERENCE: " + difference);
-
             if (difference > 0) {
                 //updates file
                 writer.write(header_args[1] + "," + header_args[2] + "," + header_args[3] + "," +
@@ -232,14 +230,10 @@ public class Partials {
     public static boolean chunkExists(String version, String fileId, String chunkNo, String dir) {
 
         String filePath = (dir + "/" + chunkNo + "-" + fileId).trim();
-        System.out.println("File Path: " + filePath);
         File f = new File(filePath);
         if(f.exists() && !f.isDirectory()) {
-            System.out.println("Chunk exists true");
             return true;
-
         }
-        System.out.println("Chunk exists false");
         return false;
     }
 
@@ -274,7 +268,6 @@ public class Partials {
         BufferedReader input = new BufferedReader(new FileReader(dir + "/conf.csv"));
         String line, fullData="";
         int toAdd = 0;
-        System.out.println("Changing conf file");
         while((line=input.readLine()) != null) {
 
             String[] separatedLine = line.split(",");
@@ -282,11 +275,9 @@ public class Partials {
             if (separatedLine != null) {
 
                 if (separatedLine[1].equals(fileId) && separatedLine[0].equals(version)) {
-                    System.out.println("Entered if");
                     String[] split = line.split(",");
 
                     toAdd += Integer.parseInt(split[5]);
-                    System.out.println("to add: " + toAdd);
 
                     deleteChunk(split[2].trim(), split[1].trim(), dir.trim());
 
@@ -342,7 +333,6 @@ public class Partials {
 
         int lineNo = getChunkWithHighDeg(currentDir);
         if(lineNo != -1) {
-            System.out.println("lineNo: " + lineNo);
 
             BufferedReader input = new BufferedReader(new FileReader(currentDir + "/conf.csv"));
             String line, fullData = "";
@@ -362,7 +352,6 @@ public class Partials {
                         System.arraycopy(split, 0, lineToReturn, 0, split.length);
                         toAdd += Integer.parseInt(split[5]);
                         chunkSize = toAdd;
-                        System.out.println("Delete.");
                         deleteChunk(split[2].trim(), split[1].trim(), currentDir.trim());
                         sendRemovedMessage(split, mc_socket, mc_address, mc_port);
 
@@ -482,7 +471,7 @@ public class Partials {
     }
 
     private static void sendRemovedMessage(String[] removed, MulticastSocket mc_socket, InetAddress mc_address, int mc_port) {
-        System.out.println("SENDING REMOVED");
+        System.out.println("Sending removed message.");
         StringBuilder builder = new StringBuilder();
 
         builder.append("REMOVED " + removed[0] + " " + removed[1] + " " + removed[2] + " ");

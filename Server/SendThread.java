@@ -64,94 +64,106 @@ public class SendThread extends Thread {
     }
 
     public void run() {
-        //read message from console
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
-        try {
-            String message = br.readLine();
+        System.out.println("Welcome. Please type one of the following commands:");
+        System.out.println("   - BACKUP <FILE> <REPLICATION DEGREE>");
+        System.out.println("   - RESTORE <FILE>");
+        System.out.println("   - DELETE <FILE>");
+        System.out.println("   - RECLAIM <SPACE>");
+        System.out.println("   - QUIT");
 
-            String[] message_args = message.split(" ");
+        while(true) {
+            System.out.println();
+            //read message from console
+            BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
-            switch(message_args[0]){
-                case "BACKUP": {
-                    System.out.println("Backup command prompted");
+            try {
+                String message = br.readLine();
 
-                    if(message_args.length != 3) {
-                        System.out.println("Usage: BACKUP <FILE> <REPLICATION DEGREE>");
+                String[] message_args = message.split(" ");
+
+                switch (message_args[0]) {
+                    case "BACKUP": {
+                        System.out.println("Backup command prompted");
+
+                        if (message_args.length != 3) {
+                            System.out.println("Usage: BACKUP <FILE> <REPLICATION DEGREE>");
+                        } else {
+                            //send file in chunks to other peers
+                            String newMessage = message + " " + Partials.version;
+                            String[] split = newMessage.split(" ");
+
+                            String tempVersion = new String();
+                            tempVersion = split[2];
+
+                            String tempRep = new String();
+                            tempRep = split[3];
+
+                            split[3] = tempVersion;
+                            split[2] = tempRep;
+
+                            sendFileChunks(split);
+                        }
+                        break;
                     }
-                    else {
-                        //send file in chunks to other peers
-                        String newMessage = message + " " + Partials.version;
-                        String[] split = newMessage.split(" ");
+                    case "RESTORE": {
+                        System.out.println("Restore command prompted");
 
-                        String tempVersion = new String();
-                        tempVersion = split[2];
+                        if (message_args.length != 2) {
+                            System.out.println("Usage: RESTORE <FILE>");
+                        } else {
+                            String newMessage = message + " " + Partials.version;
+                            String[] split = newMessage.split(" ");
 
-                        String tempRep = new String();
-                        tempRep = split[3];
+                            //retrieve chunk from other peers
+                            retrieveChunks(split);
 
-                        split[3] = tempVersion;
-                        split[2] = tempRep;
-
-                        sendFileChunks(split);
+                        }
+                        break;
                     }
-                    break;
+                    case "DELETE": {
+                        System.out.println("Delete command prompted");
+
+                        if (message_args.length != 2) {
+                            System.out.println("Usage: DELETE <FILE>");
+                        } else {
+                            //notify other peers that file was deleted
+                            String newMessage = message + " " + Partials.version;
+                            String[] split = newMessage.split(" ");
+
+                            System.out.println(split[0] + " " + split[1] + " " + split[2]);
+
+                            notifyFileDeletion(split);
+                        }
+                        break;
+                    }
+                    case "RECLAIM": {
+                        System.out.println("Space reclaim command prompted");
+
+                        if (message_args.length != 2) {
+                            System.out.println("Usage: RECLAIM <SPACE>");
+                        } else {
+                            //notify other peers that file was deleted
+                            reclaimSpace(Integer.parseInt(message_args[1].trim()));
+                        }
+                        break;
+                    }
+                    case "QUIT": {
+                        System.out.println("Exiting.");
+                        System.exit(0);
+                        break;
+                    }
+                    default: {
+                        System.out.println("Invalid command, please try again");
+                        break;
+                    }
                 }
-                case "RESTORE": {
-                    System.out.println("Restore command prompted");
 
-                    if(message_args.length != 2) {
-                        System.out.println("Usage: RESTORE <FILE>");
-                    }
-                    else {
-                        String newMessage = message + " " + Partials.version;
-                        String[] split = newMessage.split(" ");
-
-                        //retrieve chunk from other peers
-                        retrieveChunks(split);
-
-                    }
-                    break;
-                }
-                case "DELETE": {
-                    System.out.println("Delete command prompted");
-
-                    if(message_args.length != 2) {
-                        System.out.println("Usage: DELETE <FILE>");
-                    }
-                    else {
-                        //notify other peers that file was deleted
-                        String newMessage = message + " " + Partials.version;
-                        String[] split = newMessage.split(" ");
-
-                        System.out.println(split[0]+ " " + split[1] + " " + split[2]);
-
-                        notifyFileDeletion(split);
-                    }
-                    break;
-                }
-                case "RECLAIM": {
-                    System.out.println("Space reclaim command prompted");
-
-                    if(message_args.length != 2) {
-                        System.out.println("Usage: DELETE <SPACE>");
-                    }
-                    else {
-                        //notify other peers that file was deleted
-                        reclaimSpace(Integer.parseInt(message_args[1].trim()));
-                    }
-                    break;
-                }
-                default: {
-                    System.out.println("Invalid command, please try again");
-                    break;
-                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
         }
     }
 
@@ -207,7 +219,6 @@ public class SendThread extends Thread {
         boolean eof=false;
 
         while (!eof) {
-            System.out.println("Entered receiving chunks");
             byte[] buf;
             buf = createRestoreMessage(message_args, String.valueOf(chunkNo));
 
@@ -217,7 +228,6 @@ public class SendThread extends Thread {
             boolean reached=false;
 
             while(!reached) {
-                System.out.println("Entered inner cicle");
                 byte[] receive_buf = new byte[65000];
 
                 DatagramPacket receive_packet = new DatagramPacket(receive_buf, receive_buf.length);
@@ -242,9 +252,7 @@ public class SendThread extends Thread {
                         chunkNo++;
                         reached=true;
                     }
-                 System.out.println("waiting chunk with the id of# "+ chunkNo + "received #" + header_parts[3]);
             }
-            System.out.println("hello");
         }
         System.out.println("Reached the end of the file");
     }
@@ -322,14 +330,11 @@ public class SendThread extends Thread {
         }
         System.out.println("End of backup");
 
-
     }
 
     private boolean compareMessage(String[] message_args, byte[] buf, String chunkNo) {
         String received_header = new String(buf,0,buf.length);
         String[] seperated_header = received_header.split(" ");
-
-        System.out.println("Compare Message");
 
         if(seperated_header[0].equals("STORED")) {
             if(message_args[2].equals(seperated_header[1]) &&
@@ -390,7 +395,6 @@ public class SendThread extends Thread {
 
         //body
         byte[] body = chunk.getBody();
-        System.out.println("Body size sender: " + body.length);
 
         //final message
         byte[] message = new byte[header.length + body.length];

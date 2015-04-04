@@ -81,7 +81,8 @@ public class MDBReceiverThread extends Thread {
             body = (byte[]) splitMessage.get(1);
 
             //print results
-            System.out.println("HEADER: ");
+            System.out.println();
+            System.out.println("Receiving message with header: ");
             System.out.println(header);
             System.out.println();
 
@@ -95,7 +96,7 @@ public class MDBReceiverThread extends Thread {
                     InetAddress receivingHost = packet.getAddress();
                     if(!receivingHost.equals(localHost)){
                         if(!Partials.chunkExistsInFile(currentDir, header_args)) {
-                            System.out.println("Chunk does not exist");
+                            System.out.println("Chunk not yet stored on this file system");
                             //save file in storage if there is enough available space
                             if (Partials.updateConfFile(currentDir, header_args, body)) {
                                 storeChunk(body, header_args, fileName);
@@ -108,7 +109,7 @@ public class MDBReceiverThread extends Thread {
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }
-                            System.out.println("Sending STORE");
+                            System.out.println("Sending STORED");
                             sendStoredMessage(header_args);
                         }
                      }
@@ -133,7 +134,7 @@ public class MDBReceiverThread extends Thread {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        System.out.println("Sending STORE");
+        System.out.println("Sending STORED");
         sendStoredMessage(header_args);
     }
 

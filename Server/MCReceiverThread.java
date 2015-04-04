@@ -64,9 +64,7 @@ public class MCReceiverThread extends Thread {
         while(state) {
             DatagramPacket packet = new DatagramPacket(buf, buf.length);
             try {
-                System.out.println("entering mc socket receive");
                 mc_socket.receive(packet);
-                System.out.println("out of mc socket receive");
             } catch (IOException e) {
                 System.out.println("Could not receive from mdb socket");
                 e.printStackTrace();
@@ -79,7 +77,8 @@ public class MCReceiverThread extends Thread {
             header = (String) splitMessage.get(0);
 
             //print results
-            System.out.println("HEADER: ");
+            System.out.println();
+            System.out.println("Receiving message with header: ");
             System.out.println(header);
             System.out.println();
 
@@ -89,7 +88,7 @@ public class MCReceiverThread extends Thread {
             if (header_args[0].equals("STORED")) {
                 try {
                     if(!Partials.gotStored(packet.getAddress().getHostAddress(),header_args,currentDir)){
-                        System.out.println("Incrementing value stored");
+                        System.out.println("Incrementing chunk replication degree");
                         Partials.changeRepDegree(currentDir, header_args[2], header_args[3]);
                         Partials.addToStoredFile(packet.getAddress().getHostAddress(),header_args,currentDir);
                     }
@@ -98,9 +97,8 @@ public class MCReceiverThread extends Thread {
                 }
             }
             else if(header_args[0].equals("GETCHUNK")) {
-                System.out.println("Inside GETCHUNK");
                 if(Partials.chunkExists(header_args[1],header_args[2],header_args[3].trim(),currentDir)) {
-                    System.out.println("Chunk exists.");
+                    System.out.println("Chunk exists in this file system.");
 
                     int random = new Random().nextInt(401);
                     byte[] rbuf = new byte[65000];
@@ -124,7 +122,7 @@ public class MCReceiverThread extends Thread {
                     } catch (SocketTimeoutException e) {
                         Chunk toSend = null;
                         try {
-                            System.out.println("send chunk after tiemout with the id of " + header_args[3].trim());
+                            System.out.println("Sent chunk.");
                             toSend = Partials.getChunkFromFile(header_args[1], header_args[2], header_args[3].trim(), currentDir);
                             sendChunk(toSend, header_args);
                         } catch (IOException e1) {
@@ -138,8 +136,8 @@ public class MCReceiverThread extends Thread {
                 }
             }
             else if(header_args[0].equals("DELETE")) {
+                System.out.println("Deleting chunks.");
                 //delete all chunks from that file
-                System.out.println("Inside DELETE");
                 try {
                     Partials.deleteChunks(header_args[1], header_args[2], currentDir);
                 } catch (IOException e) {
@@ -148,7 +146,6 @@ public class MCReceiverThread extends Thread {
                 }
             }
             else if(header_args[0].equals("REMOVED")) {
-                System.out.println("GOT REMOVED");
                 String fileIdRemoved = header_args[2].trim();
                 String chunkNoRemoved = header_args[3].trim();
 
@@ -204,7 +201,6 @@ public class MCReceiverThread extends Thread {
 
         //body
         byte[] body = chunk.getBody();
-        System.out.println("Body size sender: " + body.length);
 
         //final message
         byte[] message = new byte[header.length + body.length];
@@ -230,7 +226,6 @@ public class MCReceiverThread extends Thread {
 
         //body
         byte[] body = chunk.getBody();
-        System.out.println("Body size sender: " + body.length);
 
         //final message
         byte[] message = new byte[header.length + body.length];
